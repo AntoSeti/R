@@ -1,0 +1,619 @@
+%% Note ? R : Ne marche pas sur Macintosh chinois... OK Windows 7.
+%% Voir avec l'icone 'SyncPDF view to editor location.
+
+%% LyX 2.0.6 created this file. For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[8pt]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[francais]{babel} 
+\usepackage{amsmath}
+\usepackage{dsfont}
+\usepackage{amsfonts}
+\usepackage{stmaryrd}
+\usepackage{amsthm}
+\usepackage{amssymb}
+
+\usepackage{graphicx}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\usepackage{url}
+\ifx\hypersetup\undefined
+  \AtBeginDocument{%
+    \hypersetup{unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=false,bookmarksopen=false,
+ breaklinks=false,pdfborder={0 0 0},backref=false,colorlinks=false}
+  }
+\else
+  \hypersetup{unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=false,bookmarksopen=false,
+ breaklinks=false,pdfborder={0 0 0},backref=false,colorlinks=false}
+\fi
+\usepackage{breakurl}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+\providecommand{\LyX}{\texorpdfstring%
+  {L\kern-.1667em\lower.25em\hbox{Y}\kern-.125emX\@}
+  {LyX}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Textclass specific LaTeX commands.
+ % this default might be overridden by plain title style
+ \newcommand\makebeamertitle{\frame{\maketitle}}%
+ \AtBeginDocument{
+   \let\origtableofcontents=\tableofcontents
+   \def\tableofcontents{\@ifnextchar[{\origtableofcontents}{\gobbletableofcontents}}
+   \def\gobbletableofcontents#1{\origtableofcontents}
+ }
+ \def\lyxframeend{} % In case there is a superfluous frame end
+ \long\def\lyxframe#1{\@lyxframe#1\@lyxframestop}%
+ \def\@lyxframe{\@ifnextchar<{\@@lyxframe}{\@@lyxframe<*>}}%
+ \def\@@lyxframe<#1>{\@ifnextchar[{\@@@lyxframe<#1>}{\@@@lyxframe<#1>[]}}
+ \def\@@@lyxframe<#1>[{\@ifnextchar<{\@@@@@lyxframe<#1>[}{\@@@@lyxframe<#1>[<*>][}}
+ \def\@@@@@lyxframe<#1>[#2]{\@ifnextchar[{\@@@@lyxframe<#1>[#2]}{\@@@@lyxframe<#1>[#2][]}}
+ \long\def\@@@@lyxframe<#1>[#2][#3]#4\@lyxframestop#5\lyxframeend{%
+   \frame<#1>[#2][#3]{\frametitle{#4}#5}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\usetheme{Singapore}
+%\usecolortheme{}
+
+\makeatother
+
+\begin{document}
+
+\title{Estimation de l'intensité d'un processus ponctuel appliqué \\ à la vision de nouveaux-nés \\
+\vspace{.5cm}
+\begin{center}
+\includegraphics[scale=0.3]{Image1.png} \\
+\end{center}
+
+}
+
+
+\author{Antoine Sétif, \\ sous la direction d'Adeline Leclercq-Samson et de Jean-François Coeurjolly}
+
+\date{}
+
+\makebeamertitle
+
+\lyxframeend{}
+
+\lyxframeend{}\section{Plan}
+\begin{frame}[fragile]
+\frametitle{Plan de la soutenance}
+\begin{itemize}
+\item Motivations du stage
+\begin{itemize}
+\item Une collaboration entre 2 laboratoires (LJK, BabyLab)
+\item Relation entre données oculométriques et processus ponctuels spatiaux 
+\end{itemize}
+\vspace{.75cm}
+\item Rappels sur les processus ponctuels spatiaux
+\begin{itemize}
+\item Définition d'un processus ponctuel spatial
+\item Intensité d'un processus ponctuel spatial
+\item Processus ponctuel de Poisson
+\item Estimation paramétrique d'un processus ponctuel de poisson 
+\end{itemize}
+\vspace{.75cm}
+\item Application au jeu de données
+\begin{itemize}
+\item Description et visualisation du jeu de données
+\item Analyse de la distribution des processus ponctuels
+\item Définition des covariables spatiales
+\item Analyse des données par un modèle log-linéaire et tests
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}\section{Motivations}
+\begin{frame}[fragile]
+\frametitle{Une collaboration entre 2 laboratoires (LJK, BabyLab)}
+Le laboratoire Jean Kuntzmann (\textbf{LJK}) est structuré en 3 départements : 
+\begin{itemize}
+\item Le département "\textit{Géométrie-Image}"  %regroupe des équipes de modélisation géométrique, de traitement, d'analyse et de synthèse d'images et de vidéos et vision par ordinateur. 
+\item Le département "\textit{Modèles et Algorithmes Déterministes}" % centre ses activités sur la modélisation et sur des outils pour le calcul numérique et symbolique. 
+\item Le département "\textit{Probabilités/Statistique}" : probabilistes, statisticiens et spécialistes de l'analyse des données et du traitement du signal. \\
+\end{itemize} 
+\vspace{1.5cm}
+Le centre d’études grenoblois du nourrisson et du jeune enfant (\textbf{BabyLab}) :
+\begin{itemize}
+\item Spécialisé dans le développement des capacités sensorielles et de la motricité. \\
+\item Techniques d'études reposant sur l'observation visuelle, auditive ou motrice.
+\end{itemize}
+\vspace{.5cm}
+%Les études réalisées par Babylab contribuent à une meilleure connaissance de la nature humaine puisqu'au cours de la première année de vie, l’absence de langage, l’immaturité du système moteur font qu’il est nécessaire d’employer des techniques d’études qui permettent de mesurer de manière indirecte les capacités cognitives du nourrisson. Ces techniques reposent essentiellement sur l’observation visuelle, auditive ou motrice du nourrisson. \\
+
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Relation entre mouvements oculaires et processus ponctuels spatiaux}
+\begin{itemize}
+\item Vision oculaire : succession de mouvements rapides (saccades) et de fixations.
+\vspace{.2cm}
+\item A chaque fixation est associée une entité géographique.
+\vspace{.2cm}
+\item Modèle statistique adapté : processus ponctuel spatiaux (intéraction géométrie stochastique et statistique spatiale).
+\vspace{.2cm}
+\item Statistique pour les processus ponctuels : modèle linéaire généralisé (GLM), modèle mixte (GLMM), package spatstat.
+\end{itemize}
+\begin{figure}[h!]
+  \centering
+      \includegraphics[width=4cm,height=3.5cm]{Soutenance3.png} \hspace{2cm}
+      \includegraphics[width=3.5cm,height=3.5cm]{Soutenance2.png} \\
+\caption{Fixations associées à l'image Rafting}
+\end{figure}
+\end{frame}
+
+\lyxframeend{}\section{Processus ponctuels spatiaux}
+\begin{frame}[fragile]
+\frametitle{Définition d'un processus ponctuel spatial}
+\begin{itemize}
+\item Un processus ponctuel $X$, défini sur $S$, est une application mesurable définie dans l'espace de probabilité $(\Omega,\mathcal{A},\mathbb{P})$ et prenant des valeurs dans $(N_{lf},\mathcal{N}_{lf})$.
+
+\begin{align*}
+\text{où } N_{lf}=\{x\subseteq S:n(x_B)<\infty \text{ pour tout borné } B\subseteq S\} \\
+\text{et }\mathcal{N}_{lf}=\sigma\left(\{x \in N_{lf}, n(x_B)=m\},B \in \mathcal{B},m \in \mathbb{N}^*\right)
+\end{align*}
+
+\vspace{.7cm}
+
+%\begin{itemize}
+%\item La distribution $P_X$ de $X$ est donnée par
+%   $P_X(F)=P(\{\omega \in \Omega:X(\omega) \in B\})$ pour
+%    $B\in\mathcal{N}_{lf}$
+%   \vspace{.5cm}
+\item La mesurabilité de $X$ est donnée par $N(B)=n(X_B)$, variable aléatoire pour tout borné B $\in$ $\mathcal{B}$.
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Mesure et fonction d'intensité d'un processus ponctuel spatial}
+\begin{itemize}
+\item Mesure de l'intensité : moment de premier ordre de la fonction de comptage.
+
+\begin{align*}
+\mu_1(B)=E(N(B))= E \left[ \underset{u\in X} {\sum} \mathbf{1}(u\in B) \right]=\int_S \mathbf{1}(u\in B) d\lambda(u)
+\end{align*} \\
+\vspace{.5cm}
+\item Si la relation décrite ci-dessus est vraie pour $\mathbf{1}(u\in B)$, elle l'est également pour des fonctions simples de type $\underset{i}{\sum} h_i \mathbf{1}(u\in B_i)$ (Théorème de Campbell). \\
+
+\begin{align*}
+E \left[ \underset{u\in X} {\sum} h(u) \right]=\int_S h(u) d\lambda(u) =\int_S h(u) \rho{(u)}du
+\end{align*} 
+où $\rho{(u)}du$, la fonction d'intensité, peut être interprétée comme la probabilité d'occurence d'un point u dans une boule $B(u,du)$.
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Processus ponctuel de Poisson (PPP)}
+
+% La façon classique de penser dans le cas d'un processus ponctuel de Poisson est la suivante :
+
+%\begin{itemize}
+%\item $\forall$ m $\geq 1, \forall$ $B_1,...,B_m$ bornés et disjoints $\subset S$, les variables aléatoires $X_{B_1},...,X_{B_m}$ sont indépendantes.
+%\item $N(B) \sim\mathcal{P}(\int_B \rho{(u)}du)$ pour tout borné $B \subset S$
+%\end{itemize}
+%\vspace{.5cm}
+\underline{Propriétés :} \\
+\vspace{.2cm}
+Soit $X$ suivant une loi de Poisson($\rho$), observable dans W $\subseteq$ S,  alors :
+\begin{itemize}
+\item  L'estimateur naturel de l'intensité $\rho$ dans le cas Poisson homogène est : $\hat{\rho} = \frac{N(W)}{|W|}$ \\
+
+\vspace{.3cm}
+\item  La densité d'un processus Poisson inhomogène est donnée par :
+\begin{align*}
+f: \begin{array}{l} N_{lf}\rightarrow \mathbb{R} \\ x=\{x_1,\hdots,x_n\}\rightarrow e^{|W|-\int_W \rho{(u)}du}\underset{u \in x}{\prod}\rho(u)\end{array}
+\end{align*}
+\end{itemize}
+
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Estimation paramétrique de l'intensité d'un PPP}
+\underline{Cas modèle linéaire généralisé :} \\
+Soit la fonction d'intensité $\rho(u)=\rho_\theta (u)=e^{(\theta^\top z(u))}$ où : \\
+\begin{itemize}
+\item $\theta$ est le vecteur des paramètres $\in \mathbb{R}^d$
+\item $z(u)=(z_1(u),...,z_p(u))^\top$ le vecteur des covariables spatiales. \\
+\end{itemize}
+\vspace{.5cm}
+La vraisemblance d'un modèle de Poisson, pour $x=\{x_1,\hdots,x_n\}$ sur $W$ est :
+\begin{align*}
+L_W(\theta)=e^{|W|-\int_W \rho_\theta{(u)}du}\prod_{i=1}^{n(X)}\rho_\theta(x_i) 
+\end{align*}
+
+Soit la log-vraisemblance suivante :
+\begin{align*}
+\log L_W(\theta)=|W|-\int_W \rho_\theta{(u)}du + \sum_{i=1}^{n(X)} \log  \rho_\theta(x_i)=
+\sum_{i=1}^{n(X)} \log  \rho_\theta(x_i) -\int_W \rho_\theta{(u)}du
+\end{align*}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Estimation paramétrique de l'intensité d'un PPP \\ Approche Berman-Turner}
+L’estimation du maximum de vraisemblance de $\theta$ est obtenue en maximisant :
+\begin{align*}
+\log L_W(\theta)= \sum_{i=1}^{n(X)} \log  \rho_\theta(x_i) -\int_W \rho_\theta{(u)}du
+\end{align*}
+Berman et Turner (1992) ont développé un programme en utilisant des méthodes de quadrature. L'idée étant de discrétiser l'intégrale par une somme pondérée. \\
+\vspace{.5cm}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=3cm,height=3cm]{quadra.png}
+  \caption{Exemple de schéma en quadrature}
+  \text{Données (\textbullet), dummy points (+) et bordures des cellules (lignes grises)}
+\end{figure}
+%\underline{Processus :}
+%\begin{itemize}
+%\item La fenêtre W est divisée en une grille de $ k \times k $ cellules, avec exactement un "dummy point" placé au centre de celles-ci.
+%\item L'ensemble des "dummy points" regroupés aux données réelles forment les "quadratures points".
+%\item Le poids de chaque point quadrature est défini comme l'aire de la cellule divisée par le nombre de points quadrature dans cette cellule, soit $w_j=a/n_j$.
+%\end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Estimation paramétrique de l'intensité d'un PPP}
+
+L'intégrale peut alors être approchée par la quadrature : 
+\begin{align*}
+\int_W \rho_\theta{(u)}du \approx \sum_{j=1}^{m} \rho_\theta{(u_j)} w_j
+\end{align*}
+
+La log vraisemblance peut alors être exprimée par : 
+\begin{align*}
+\log  L_W(\theta) \approx \sum_{i=1}^{n(X)} \log  \rho_\theta(x_i) - \sum_{j=1}^{m} \rho_\theta{(u_j)} w_j 
+\end{align*}
+Soit $z_j$ une indicatrice des données observées et $y_j=z_j/w_j$, alors :
+\begin{align*}
+\log  L_W(\theta) \approx \sum_{j=1}^{m} (y_j \log  \rho_\theta(u_j) -  \rho_\theta(u_j)) w_j
+\end{align*}
+$\rightarrow$ Log vraisemblance pondérée Poissonnienne : fonction lien, la fonction $\log$. \\
+\vspace{.3cm}
+
+\underline{Attention :} La variable $y_j$ n'est pas de type entière $\rightarrow$ \textbf{quasi-vraisemblance} %(respect des propriétés asymptotiques du max de vraisemblance sans émettre d'hypothèses sur $y_j$). \\
+\end{frame}
+
+\lyxframeend{}\section{Analyse}
+\begin{frame}[fragile]
+\frametitle{Description du jeu de données}
+\underline{Expérience : 5 groupes, 6 images}
+\begin{itemize} 
+\item 44 bébés de 3 mois, 47 de 6 mois, 44 de 9 mois, 46 de 12 mois et 44 adultes.
+\item 6 images de scènes naturelles.
+\end{itemize}
+
+\begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.3]{ImagesExp.png}
+\caption{Les 6 images de l'expérience}
+\end{figure}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Visualisation du jeu de données}
+\begin{itemize}
+\item Images en format \textbf{bitmap}
+\item Concentration de fixations autour de zones bien précises.
+\end{itemize}
+\begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.32]{Im4.png}
+      \caption{Fixations par groupe d'âge, image Rafting}
+\end{figure}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Distribution du processus ponctuel spatial (1)}
+\begin{itemize}
+\item Test de l'homogénéité poissonnienne :
+\begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.3]{RaftingQuadrat.png} \\
+  \centering
+      \includegraphics[scale=0.3]{Quadrat.png}
+\end{figure}
+\item On rejette l'hypothèse d'homogénéité poissonnienne.
+\item Même conclusion pour toutes les images.
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Distribution du processus ponctuel spatial (2)}
+\begin{itemize}
+\item Test de l'inhomogénéité poissonnienne : appel à la fonction $K_{inhom}$ de Ripley.
+\item Simulation d'un certain nombre de processus de Poisson inhomogène ($H_0$).% afin de construire des enveloppes de confiance (95\%).
+\begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.3]{KinhomRafting.png}
+\end{figure}
+\item Notre procesus peut être considéré comme un processus de Poisson inhomogène. % Il admet des zones privilégiées (dues aux caractéristiques de l'image) mais les points qui le composent n'ont pas de dépendance entre eux. 
+\item Raisonnement applicable à toutes les images, à tous les groupes d'âge.
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Covariables spatiales - Cartes de saillance}
+\begin{itemize}
+\item Une haute saillance signifie une forte probabilité de fixation.
+\item Carte de saillance "moyenne" construite à partir de 6 niveaux de saillance :
+\end{itemize}
+
+\begin{figure}[h!]
+   \begin{minipage}[c]{\linewidth}
+     \centering
+      \includegraphics[width=3.5cm,height=2.5cm]{LumHF4.png}
+      \includegraphics[width=3.5cm,height=2.5cm]{LumBF4.png}
+      \includegraphics[width=3.5cm,height=2.5cm]{ChrRVHF4.png}
+   \end{minipage} \hfill
+   \begin{minipage}[c]{\linewidth}
+     \centering
+      \includegraphics[width=3.5cm,height=2.5cm]{ChrRVBF4.png}
+      \includegraphics[width=3.5cm,height=2.5cm]{ChrBJHF4.png}
+      \includegraphics[width=3.5cm,height=2.5cm]{ChrBJBF4.png}
+   \end{minipage}
+   \caption{6 cartes de saillances, image Rafting}
+\end{figure}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Covariables spatiales - Cartes de saillance}
+\begin{itemize}
+\item A partir de ces 6 cartes, construction de 6 cartes de saillance "moyenne" :
+\begin{figure}[h!]
+
+   \begin{minipage}[c]{\linewidth}
+    \centering
+      \includegraphics[width=3.5cm,height=2.5cm]{SailMoy1.png}
+      \includegraphics[width=3.5cm,height=2.5cm]{SailMoy2.png}
+      \includegraphics[width=3.5cm,height=2.5cm]{SailMoy3.png}
+   \end{minipage} \hfill
+   \begin{minipage}[c]{\linewidth}
+     \centering
+      \includegraphics[width=3.5cm,height=2.5cm]{SailMoy4.png}
+      \includegraphics[width=3.5cm,height=2.5cm]{SailMoy5.png}
+      \includegraphics[width=3.5cm,height=2.5cm]{SailMoy6.png}
+   \end{minipage}
+\end{figure}
+\item Les cartes de saillance ont été normalisées.% c'est à dire que pour chaque pixel de l'image de dimension 1024 $ \times $  768,  une valeur entre 0 et 1 représentant le niveau de saillance lui a été assignée.
+\end{itemize}
+\end{frame}
+
+%\lyxframeend{}
+%\begin{frame}[fragile]
+%\frametitle{Covariables spatiales - Cartes de saillance}
+
+%Représentation de l'ensemble des fixations, en leur associant leur niveau de saillance moyen.
+
+%\begin{figure}[h!]
+ % \centering
+  %          \includegraphics[width=4.5cm,height=3cm]{RaftingTotSail.png}
+  %\caption{Fixations associées au niveau de saillance moyen, image rafting} 
+%\end{figure}
+%\end{frame}
+
+%\lyxframeend{}
+%\begin{frame}[fragile]
+%\frametitle{Covariables spatiales - Cartes de saillance}
+% Représentation de l'ensemble des fixations, par groupe d'âge, en leur associant leur niveau de saillance moyen.
+%\begin{figure}[h!]
+%  \centering
+ %            \includegraphics[width=10cm,height=6cm]{SailRaftingGr.png}
+%  \caption{Fixations associées au niveau de saillance moyen, par groupe d'âge, image rafting} 
+%\end{figure}
+%\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Covariables spatiales - Zones cognitives}
+\begin{itemize}
+\item Recherche d'une covariable spatiale permettant de mesurer la variabilité d'acuité visuelle entre les 4 groupes d'âges des bébés.
+\item Zone cognitive : zone qui a attiré le plus l'attention d'un adulte.
+\item Zones cognitives construites en estimant non paramétriquement l'intensité du groupe adultes (via la fonction \textbf{density.ppp} de \textbf{R}).% puis en sélectionnant 5\% des pixels de l'image où l'intensité était la plus forte.
+\item Création d'une carte binaire à partir des 5\% pixels les plus intenses.
+\end{itemize}
+
+\begin{figure}[h!]
+  \centering
+      \includegraphics[width=4.5cm,height=3cm]{BinRafting.png}
+      \caption{Carte binaire, top 5\%, image rafting} 
+\end{figure}
+
+\end{frame}
+
+%\lyxframeend{}
+%\begin{frame}[fragile]
+%\frametitle{Covariables spatiales - Cartes binaires}
+% Pour l'ensemble des 6 images, nous obtenons :
+%\begin{figure}[h!]
+%  \centering
+%    \includegraphics[width=11cm,height=6cm]{BinTout.png}
+%    \caption{Cartes binaires, top 5\%, pour les 6 images} 
+%\end{figure}
+%\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Analyse par un modèle log-linéaire \\ Présentation des objets R utilisés}
+
+\begin{figure}[h!]
+  \centering
+   \begin{minipage}[c]{\linewidth}
+    \includegraphics[scale=0.4]{HypIm.png}
+     \includegraphics[scale=0.4]{Hyp34.png}
+     \includegraphics[scale=0.4]{Hyp56.png}
+   \end{minipage}
+   \caption{Hyperframes construites}
+\end{figure}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Analyse par un modèle log-linéaire \\ Présentation des objets R utilisés}
+Par exemple, pour le groupe adultes sur l'image rafting :
+\begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.4]{StrExPP.png} \\
+\end{figure}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Analyse par un modèle log-linéaire \\ Ecriture du modèle}
+\underline{Objectif :} \\
+\vspace{.5cm}
+Evaluer les différences d'intensités (différences d'emplacement des fixations) entre les 4 groupes d'âge des bébés. \\
+\vspace{.5cm}
+Pour chaque image, on construit le modèle suivant : \\
+\begin{center}
+   $\log \rho(u,m,\theta)=\theta_1  Saillance(u) + \displaystyle\sum_{m’=1}^{4} \left( \theta^{m^\prime}_0  + \theta^{m^\prime}_1    ZCBin(u) \right) \mathds{1}_{m’=m} $ 
+   \end{center}
+   
+  où :
+  \begin{itemize}
+   \item $u$ est un point de $R^{2}$
+   \item $m$ est un groupe d'âge
+   \item $Saillance$ et $ZCBin$ sont les covariables spatiales précédemment décrites \\
+   \end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Analyse par un modèle log-linéaire \\ Fonction MPPM du package spatstat}
+\begin{itemize}
+\item Application de la fonction MPPM :
+   \begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.35]{fit.png}
+      \end{figure}
+  \item  9 coefficients, on ne s'intéresse qu'aux 4 nous permettant de mesurer la variabilité entre les groupes d'âges.   
+      \begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.35]{summaryfit.png}
+\end{figure}
+\item Méthode d'estimation utilisée par la fonction \textbf{mppm} : quasi-vraisemblance.
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.35]{SumQuasi.png}
+  \end{figure}
+  \end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Analyse par un modèle log-linéaire \\ IC Plot}
+A l'aide du package \textbf{plotrix}, représentation des coefficients estimés avec leur intervalle de confiance (à 95\%) :
+
+\begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.3]{ZCBinIm.png} 
+\end{figure} 
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Analyse par un modèle log-linéaire \\ Tests}
+\begin{itemize}
+\item Différences significatives dans 3 situations ?
+\begin{itemize}
+\item groupe 12 mois contre groupe 3 mois
+\item groupe  9 et 12 mois réunis contre groupe 3 et 6 mois réunis
+\item groupe  12 mois contre groupe 3, 6 et 9 mois réunis. 
+\end{itemize}
+\vspace{.3cm}
+\item Pas de tests individuels.
+\item Réalisation des tests simultanés où l'hypothèse $H_0$ englobe les 3 conditions (p-values corrigées selon un critère d'ajustement (FWER)).
+% \item Tests simultanés réalisables avec les fonctions \textbf{glht} du package \textbf{multcomp}.
+\end{itemize}
+\begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.45]{Soutenan1.png}
+      \end{figure}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Analyse par un modèle log-linéaire \\ Résultats des tests multiples}
+\begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.35]{Test5.png} \\
+      \vspace{.3cm}
+      \includegraphics[scale=0.35]{Test6.png} 
+    \caption{Exemple : résultats tests multiples Image 5 et 6}
+\end{figure}
+
+\end{frame}
+
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Analyse par un modèle log-linéaire mixte \\ Effet aléatoire sujet}
+\begin{itemize}
+\item Différence d'acuité visuelle entre les sujets d'un même groupe d'âge sur une image donnée ?
+\item Nécessité de construire une nouvelle hyperframe :
+\begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.33]{hypglob1.png}
+\end{figure}
+\item A l'appel de la fonction, on spécifie que l'on ne souhaite pas prendre en compte les sujets n'ayant aucune fixation sur une image.
+\begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.35]{FitAlea.png}
+\end{figure}
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Analyse par un modèle log-linéaire mixte \\ Résultats}
+\begin{itemize}
+\item Effets aléatoires des sujets très faibles, quelle que soit la covariable retenue.
+\begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.3]{RandomAlea.png}
+\end{figure}
+\item Matrice de variance-covariance résiduelle $\rightarrow$ variabilité résiduelle très faible.
+\begin{figure}[h!]
+  \centering
+      \includegraphics[scale=0.3]{MatriceVarCovar.png}
+\end{figure}
+\item  Pas de différences significatives entre les sujets d'un même groupe d'âge pour une image donnée.
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}\section{Conclusion}
+\begin{frame}[fragile]
+\frametitle{Conclusion}
+\begin{itemize}
+\item Distribution Poisson inhomogène : l'emplacement des fixations est en partie guidé par les caractéristiques locales de l'image (contrastes, bordures et couleurs).
+\vspace{.5cm}
+\item En modélisant l'intensité par le modèle log-linéaire suivant,
+   \begin{center}
+   $\log \rho(u,m,\theta)=\theta_1  Saillance(u) + \displaystyle\sum_{m’=1}^{4} \left( \theta^{m^\prime}_0  + \theta^{m^\prime}_1    ZCBin(u) \right) \mathds{1}_{m’=m} $ 
+   \end{center}
+on note un mouvement significatif des fixations (selon l'âge du bébé évoluant) sur certaines images.
+\vspace{.5cm}
+\item En modélisant l'intensité par un modèle log-linéaire mixte, nous ne décelons pas de différences significatives entre l'acuité visuelle des sujets d'un même groupe d'âge, pour une image donnée.
+\vspace{.5cm}
+\item \underline{Perspectives :}
+\begin{itemize}
+\item D'autres sujets de recherche sur les mouvements de l'oeil pourraient être encore approfondis afin de trouver de meilleures covariables spatiales et obtenir de bons résultats pour toutes les images.
+\vspace{.3cm}
+\item Serions-nous être capables d'estimer l'intensité de nos processus ponctuels par un modèle log-linéaire mixte en plaçant l'effet aléatoire sur l'image ?
+\end{itemize}
+\end{itemize}
+\end{frame}
+\end{document}

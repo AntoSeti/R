@@ -1,0 +1,1213 @@
+%Note ? R. : Fichier long ? compiler (3 minutes) car plusieurs questions demendant une approche exp?rimantale (simulation de gros ?chantillons).
+% Voir avec l'icone 'SyncPDF view to editor location.
+
+\documentclass[a4paper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[french]{babel} 
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx} % Graphiques
+\usepackage{fullpage}
+\usepackage{Sweave}
+\DefineVerbatimEnvironment{Sinput}{Verbatim}{xleftmargin=1cm, frame=single}
+\DefineVerbatimEnvironment{Soutput}{Verbatim}{xleftmargin=1cm, frame=single}
+
+\title{Travaux Pratiques Econom?trie des variables qualitatives}
+\author{Antoine S?tif}
+\date{}
+
+\sloppy     
+
+\begin{document}
+\maketitle
+\section{Exercice}
+\textit{L'id?e est de v?rifier un certain nombre de propri?t?s en utilisant une approche exp?rimentale. Prenons le contexte o? on va chercher ? mod?liser le succ?s ? une ann?e du master MASSS en fonction des notes de contr?les continus.} \\
+\begin{enumerate}
+\item \textit{Cr?ez deux s?ries de taille n=100 correspondant ? deux notes dans deux mati?res par simulation. Notez les \textbf{x1} et \textbf{x2}. Faites-en sorte que les moyennes soient disons 13 et 10. Cr?ez ?galement deux variables auxiliaires : l'une correspondant au sexe et l'autre ? l'?ge des ?tudiants. L'ensemble de ces variables sont fix?es et ne bougeront plus ? moins de faire varier n.} \\
+
+Pour nos 100 individus, nous allons commencer par cr?er nos variables x1 et x2 repr?sentant les r?sultats des notes aux deux examens. Pour cela, nous allons simuler deux lois normales centr?es en 13 d'une part et 10 d'autre part.
+<<>>=
+set.seed(1712) # On fige la racine du generateur aleatoire
+x1<-round(rnorm(100,13,2),1) 
+
+c(min(x1),max(x1)) 
+# Verification qu'aucune note est inferieure a 0 et superieure a 20
+(mean(x1)) # Moyenne voisine de 13
+x2<-round(rnorm(100,10,2),1) 
+# Simulation d'une loi normale pour avoir les notes au second examen, arrondis au 1er decimal
+
+c(min(x2),max(x2)) 
+# Verification qu'aucune note est inferieure a 0 et superieure a 20
+(mean(x2)) # Moyenne voisine de 10
+@
+
+On cr?e ensuite notre variable sexe en passant par une simulation d'une loi binomiale.
+<<>>=
+sexe<-rbinom(100,1,p=0.5) # Simulation d'une loi binomiale
+mean(sexe) # Proportion d'hommes
+@
+On cr?e ensuite notre variable ?ge en passant par une simulation d'une loi uniforme.
+<<>>=
+age<-round(runif(100,21,28),0)
+@
+
+\item \textit{Cr?ez une simulation d'un mod?le logit not? \textbf{yl} qui ne d?pend que de x1 et x2. Fixez $\beta_1$ = 2 et $\beta_2$ = 5 et ajustez $\beta_0$ de sorte qu'il y ait ? peu pr?s 50 \% de 1 dans l'?chantillon \textbf{yp}. M?me travail avec un mod?le probit, variable not?e \textbf{yp}. Sauvegardez le jeu de donn?es.} \\
+
+Dans un premier temps, constatons que :
+<<>>=
+beta1<-2
+beta2<-5
+(mean(beta1*x1+beta2*x2))
+@
+\\
+C'est ? dire que nous devons ajuster $\beta_0$ tel qu'il y ait 50\% de 0 et 50\% de 1.
+Par l'instruction R suivante, en prenant naturellement $\beta_0$=-77 :
+<<>>=
+beta0<- -77
+p<-plogis(beta1*x1+beta2*x2+beta0,0,1)
+yl<-rbinom(100,1,p)
+mean(yl) # 0.48, voisin de 0.5
+@
+\\
+De m?me, r?alisons le raisonnement pour le mod?le probit.
+<<>>=
+beta0<- -77
+beta1<-2
+beta2<-5
+p<-pnorm(beta1*x1+beta2*x2+beta0,0,1)
+yp<-rbinom(100,1,p)
+mean(yp) # On retrouve 0.48
+@
+\\
+Enregistrons d?sormais \textbf{yl} et \textbf{yp} en tant que dataframe et sauvons nos donn?es.
+<<>>=
+dfl<-data.frame(yl=yl,x1=x1,x2=x2,sexe=sexe,age=age)
+dfp<-data.frame(yp=yp,x1=x1,x2=x2,sexe=sexe,age=age)
+save(dfp,dfl,file="dfProjEcono.Rdata")
+@
+\\
+\item \textit{Tracer \textbf{yl} en fonction de \textbf{x1} et \textbf{x2} et v?rifiez que de fortes valeurs des covariables influencent le succ?s ? l'examen final.} \\
+<<fig.width=7, fig.height=6.5>>=
+par(mfrow=c(2,1)) 
+plot(x1,yl,main="Succes au master en fonction du premier examen")
+plot(x2,yl,main="Succes au master en fonction du second examen")
+@
+Visuellement parlant, d'un rapide coup d'oeil, on peut imaginer que les r?sultats au second examen influencent plus la r?ussite au master MASSS que les r?sultats au premier examen.
+
+Verifions que de fortes valeurs des covariables \textbf{x1} et \textbf{x2} influencent le succ?s au master.
+<<>>=
+head(dfl[order(x1,decreasing=T),c(1,2)])
+head(dfl[order(x2,decreasing=T),c(1,3)])
+@
+\underline{Analyse du premier mod?le (\textbf{yl} en fonction de \textbf{x1}) :} \\
+<<>>=
+mod1=(glm(yl~x1,family=binomial(logit),data=dfl))
+summary(mod1)
+@
+\underline{Analyse du second mod?le (\textbf{yl} en fonction de \textbf{x2}) :} \\
+<<>>=
+mod2=(glm(yl~x2,family=binomial(logit),data=dfl))
+summary(mod2)
+@
+Lez coefficientz $\beta_1$ d'une part, et $\beta_2$ d'autre part, sont significatifs.
+Plus les notes aux examens sont ?lev?s, plus les chances de r?ussite au master MASSS sont importantes (interpr?tation de $\beta_1$ et $\beta_2$ > 0). \\
+\item \textit{Supposons qu'on ait les bonnes covariables. Estimez les param?tres du mod?le \textbf{yl} en fonction de \textbf{x1}+\textbf{x2} en supposant un mod?le logistique puis probit. M?me travail en consid?rant le mod?le \textbf{yp} en fonction de \textbf{x1}+\textbf{x2}. Rappelez (et v?rifiez) comment on peut approximativement "convertir" les estimations d'un mod?le logit et probit (et inversement).} \\
+
+Pour le mod?le logit : \\
+<<warning=FALSE>>=
+mod3=(glm(yl~x1+x2,family=binomial(logit),data=dfl))
+mod3$coefficients
+@
+Constatons que l'on retrouve approximativement $\beta_1$=2 et $\beta_2$=5. C'est coh?rent.  \\
+
+Estimons les param?tres du mod?le en consid?rant qu'il est de nature probit.
+<<warning=FALSE>>=
+mod4=(glm(yl~x1+x2,family=binomial(probit),data=dfl))
+tablelogit=cbind(mod3$coefficients,mod4$coefficients*pi/sqrt(3))
+colnames(tablelogit)=c("Coeff.mod3","Coeff.mod4")
+tablelogit
+@
+
+Pour le mod?le probit :
+<<warning=FALSE>>=
+mod5=(glm(yp~x1+x2,family=binomial(probit),data=dfp))
+mod5$coefficients
+@
+Constatons que l'on retrouve une nouvelle fois, de mani?re approximative, $\beta_1$=2 et $\beta_2$=5.  \\
+
+Estimons les param?tres du mod?le en consid?rant qu'il est de nature logit.
+<<warning=FALSE>>=
+mod6=(glm(yp~x1+x2,family=binomial(logit),data=dfp))
+tableprobit=cbind(mod5$coefficients,mod6$coefficients*sqrt(3)/pi)
+colnames(tableprobit)=c("Coeff.mod5","Coeff.mod6")
+tableprobit
+@
+\newpage
+
+\item \textit{On se concentre ? partir de maintenant uniquement sur le mod?le logit. Interpr?tez les coefficients estim?s. En particulier, si la note \textbf{x1} augmente d'un point, quelle est l'influence sur la probabilit? de succ?s de l'examen final.} \\
+
+<<warning=FALSE>>=
+mod3=(glm(yl~x1+x2,family=binomial(logit),data=dfl))
+summary(mod3)
+@
+
+\underline{Interpr?tation des coefficients :} Plus les notes augmentent, plus les chances de succ?s ? l'examen sont importantes (car coefficients positifs et significatifs). \\
+
+Quelle est l'influence sur les probabilit?s de succ?s si nous augmentons d'une unit? la note \textbf{x1} ?
+
+<<>>=
+exp(mod3$coeff[2])
+@
+La cote (rapport entre les probabilit?s de succ?s et d'?chec) va ?tre multipli?e par 9.731.
+Autrement dit, les chances de succ?s augmentent. \\
+
+Quelle est l'influence sur les probabilit?s de succ?s si nous augmentons d'une unit? la note \textbf{x2} ?
+
+<<>>=
+exp(mod3$coeff[3])
+@
+
+La cote va ?tre multipli?e par plus de 200!
+Les chances de succ?s augmentent de mani?re tr?s significative. \\
+
+Nous pouvons nous rendre compte ? ce stade de l'importance de la deuxi?me note sur les chances de r?ussite au master. \\
+\newpage
+Voyons comment cela se traduit sur notre deuxi?me individu : \\
+<<>>=
+dfl[1:10,] # Individu 2 : x1=10.5, x2=9.7
+exp(mod3$coeff[1]+mod3$coeff[2]*dfl$x1[2]+mod3$coeff[3]*dfl$x2[2]) 
+@
+L'individu 2 a 0.0002154 fois plus de chances d'un succ?s ? l'examen plut?t qu'un ?chec. \\
+
+<<>>=
+exp(mod3$coeff[2])
+exp(mod3$coeff[2])*exp(mod3$coeff[1]+mod3$coeff[2]*dfl$x1[2]+mod3$coeff[3]*dfl$x2[2]) 
+@
+Une augmentation de 1 point sur la premi?re note aurait fait passer la cote de 0.0002154 ? 0.002096. \\
+
+Qu'en est-il concernant l'augmentation d'une unit? de la seconde note sur notre deuxi?me individu ? \\
+<<>>=
+exp(mod3$coeff[3])
+exp(mod3$coeff[3])*exp(mod3$coeff[1]+mod3$coeff[2]*dfl$x1[2]+mod3$coeff[3]*dfl$x2[2]) 
+@
+Une augmentation de 1 point sur la deuxi?me note de notre deuxi?me individu aurait fait passer la cote de 0.0002154 ? 0.05031. \\
+\newpage
+\item \textit{Quelle est l'erreur standard des estimations des param?tres ? V?rifiez la sortie R avec la formule th?orique (indication : calculez la matrice d'information de Fisher).} \\
+
+<<>>=
+summary(mod3)
+fi<-dlogis(mod3$coefficients[1]+mod3$coefficients[2]*x1+mod3$coefficients[3]*x2,0,1)
+V<-0
+for(i in (1:100)){
+      tmp<-c(1,x1[i],x2[i])
+      tmp2<-t(t(tmp))%*%tmp
+      V<-V+fi[i]*tmp2
+}
+
+sqrt(diag(solve(V)))
+@
+On retrouve bien nos erreurs standards associ?es ? chacun de nos coefficients. \\
+
+\item \textit{Les variables \textbf{x1} et \textbf{x1} sont-elles significatives au seuil de 5\% ? V?rifiez le calcul de la p-valeur.} \\
+
+Les 2 variables sont bien significatives (r?ponse ? la question 5). V?rifions les p-valeurs associ?es :
+
+<<>>=
+2*(1-pnorm(summary(mod3)$coef[2,1]/summary(mod3)$coef[2,2]))
+2*(1-pnorm(summary(mod3)$coef[3,1]/summary(mod3)$coef[3,2]))
+@
+\newpage
+Par ailleurs, il est int?ressant de noter que :
+<<fig.width=7, fig.height=9>>=
+par(mfrow=c(3,1))
+plot(x1,mod3$fitted.values,main="Chances de succ?s en fonction de la premi?re note")
+plot(x2,mod3$fitted.value,main="Chances de succ?s en fonction de la seconde note")
+plot(sort(mod3$fitted.values),main="Chances de succ?s pour tous les individus")
+@
+
+Tr?s peu d'influence de la premi?re note, en revanche, la seconde note d?termine beaucoup plus les chances de succ?s. \\
+
+\item \textit{Montrer par une approche exp?rimentale (en simulant un grand nombre de fois la mod?le) qu'en moyenne, on retrouve approximativement les valeurs des param?tres. Montrer, en faisant ?voluer n que les estimateurs sont consistants (i.e que leur variance tend vers 0). V?rifiez ?galement la normalit? asymptotique.} \\
+
+Nous allons montrer qu'en moyenne, on retrouve approximativement la valeur des param?tres $\beta_1$ = 2 et $\beta_2$ = 5. \\
+
+Premi?rement, nous d?cidons de faire 100 simulations de taille n=100 :
+<<>>=
+coeff<-array(dim=c(1000,2))
+nsim=1000
+for(i in (1:nsim)){
+     set.seed(i)
+     x1b<-round(rnorm(100,13,.1),1)
+     x2b<-round(rnorm(100,10,.1),1)
+     pb<-plogis(beta1*x1b+beta2*x2b-76,0,1)
+     ylb<-rbinom(100,1,pb)
+     mod3b=(glm(ylb~x1b+x2b,family=binomial(logit)))
+     coeff[i,1]<-mod3b$coeff[2]
+     coeff[i,2]<-mod3b$coeff[3]
+ }
+
+mean(coeff[,1])
+mean(coeff[,2])
+@
+Dans un second temps, nous allons chercher ? montrer que nos estimateurs sont consistants.
+Nous allons dans un premier lieu fixer n=1000, puis n=10000 et comparer les sorties observ?es.
+<<>>=
+#### 1K ####
+x11K<-round(rnorm(1000,13,1),1)
+x21K<-round(rnorm(1000,10,1),1)
+p1K<-plogis(beta1*x11K+beta2*x21K-76,0,1)
+yl1K<-rbinom(1000,1,p1K)
+mod31K=(glm(yl1K~x11K+x21K,family=binomial(logit)))
+#### 10K ####
+x110K<-round(rnorm(10000,13,1),1)
+x210K<-round(rnorm(10000,10,1),1)
+p10K<-plogis(beta1*x110K+beta2*x210K-76,0,1)
+yl10K<-rbinom(10000,1,p10K)
+mod310K=(glm(yl10K~x110K+x210K,family=binomial(logit)))
+@
+<<>>=
+summary(mod3)$coef # n=100
+summary(mod31K)$coef # n=1000
+summary(mod310K)$coef # n=10000
+@
+Nous pouvons voir que les coefficients estim?s se rapprochent de plus en plus des vraies param?tres et les erreurs standards (donc les variances) tendent vers 0 plus n est grand. \\
+
+V?fifions d?sormais la normalit? asymptotique (1000 simulations avec n=100) :
+<<fig.width=6,fig.height=4,fig.align='center'>>=
+par(mfrow=c(1,1))
+coeff<-array(dim=c(1000,2))
+nsim=1000
+for(i in (1:nsim)){
+     set.seed(i)
+     x1b<-round(rnorm(100,13,.1),1)
+     x2b<-round(rnorm(100,10,.1),1)
+     pb<-plogis(beta1*x1b+beta2*x2b-76,0,1)
+     ylb<-rbinom(100,1,pb)
+     mod3b=(glm(ylb~x1b+x2b,family=binomial(logit)))
+     coeff[i,1]<-mod3b$coeff[2]
+     coeff[i,2]<-mod3b$coeff[3]
+ }
+hist(coeff[,1],col="lightblue",main="Evaluation des parametres beta 1",xlab="",ylab="",freq=FALSE)
+x<-seq(-5,10,.1)
+y<-dnorm(x,mean(coeff[,1]),sd(coeff[,1]))
+lines(x,y,col="red")
+@
+<<fig.width=6,fig.height=4,fig.align='center'>>=
+hist(coeff[,2],col="lightblue",main="Evaluation des parametres beta 2",xlab="",ylab="",freq=FALSE)
+x<-seq(-5,13,.1)
+y<-dnorm(x,mean(coeff[,2]),sd(coeff[,2]))
+lines(x,y,col="red")
+@
+On peut remarquer que dans certains cas, $\beta_1$ (et m?me $\beta_2$) peut prendre des valeurs n?gatives. Il y a donc des valeurs extr?mes pour chacun des coefficients. \\
+
+A premi?re vue, la normalit? est bien respect?e. V?rifions cela par un test de Shapiro. \\
+Pour rappel, \textit{$H_{1}$ : la s?rie des observations ne suit pas une loi normale.} \\
+
+Ainsi, si on ne rejette pas l'hypoth?se nulle (ou si on ne peut pas accepter $H_1$), alors on ne pourra pas dire que la s?rie des observations ne suit pas une loi normale.
+
+<<>>=
+shapiro.test(coeff[,1])
+shapiro.test(coeff[,2])
+@
+
+C'est bien le cas ici pour $\beta_1$. \\
+En revanche, pour $\beta_2$, la sortie R nous indique le contraire du r?sultat visuellement attendu. \\
+Myst?re.
+
+\item \textit{Reprenons le jeu de donn?es initial (taille 100), consid?rez le mod?le ? 2 variables explicatives \textbf{x1}+\textbf{x2}. V?rifiez le calcul de la d?viance obtenue par la sortie R standard. Quelle est la p-valeur du test de d?viance ?}
+
+<<>>=
+mod3$deviance
+@
+\underline{1?re m?thode :} \\
+Pour rappel, $D?viance=-2*Log Vraisemblance$.
+<<>>=
+piEst<-mod3$fitted.values
+-2*sum(yl*log(piEst)+(1-yl)*log(1-piEst))
+@
+\underline{2nde m?thode :}
+<<>>=
+i0<-which(yl==0)
+i1<-which(yl==1)
+-2*(sum(log(1-piEst[i0]))+sum(log(piEst[i1])))
+@
+Pour rappel, $H_{1}$ : Le mod?le n'est pas correct. \\
+La statistique de d?viance suit approximativement une loi de $khi^{2}(n-p)$ sous $H_0$, avec n grand = 100 et p le nombre de r?gresseurs, 2 variables explicatives + constante = 3).
+<<>>=
+1-pchisq(mod3$dev,df=100-3)
+@
+Ici, on ne peut pas accepter $H_1$. \\
+Le mod?le n'est pas forc?ment bon, mais on ne peut pas dire qu'il n'est pas correct. \\
+\item \textit{D?terminons un intervalle de confiance au seuil de 95\% des param?tres estim?s.}
+<<>>=
+(ICb1<-summary(mod3)$coeff[2,1]+c(-1.96,1.96)*summary(mod3)$coeff[2,2])
+(ICb2<-summary(mod3)$coeff[3,1]+c(-1.96,1.96)*summary(mod3)$coeff[3,2])
+@
+\item \textit{Formez le test statistique permettant de montrer $H_{1}$ : $\beta_2$ > $\beta_1$.}
+
+Pour cela, nous avons besoin de la matrice de Fisher : \\
+Sous $H_0$, la statistique de test (unilat?ral) suit une loi normale (0,1).
+<<warning=FALSE>>=
+(InfoFis<-sqrt(solve(V)))
+@
+\newpage
+<<>>=
+(deltaEst.H0<-(mod3$coeff[3]-mod3$coeff[2])/(sqrt((InfoFis[3,3]+InfoFis[2,2]-2*InfoFis[2,3])/100)))
+1-pnorm(deltaEst.H0)
+@
+Ici, on accepte $H_{1}$, $\beta_2$ > $\beta_1$. \\
+
+\item \textit{Consid?rez le mod?le ? 4 variables explicatives \textbf{x1}+\textbf{x2}+\textbf{age}+\textbf{sexe} (mod?le complet) et commentez. Testez par un test bas? sur la d?viance ce nouveau mod?le par rapport au mod?le pr?c?dent.}
+
+<<warning=FALSE>>=
+modcomplet=glm(yl~x1+x2+sexe+age,family=binomial(logit),data=dfl)
+summary(modcomplet)
+@
+Visiblement, les variables \textbf{sexe} et \textbf{age} n'influencent pas le succ?s au master. \\
+Continuons par un test de d?viance sur ce mod?le : \\
+
+Pour rappel, \textit{$H_{1}$ : Le mod?le n'est pas correct.} \\
+
+La statistique d?viance suit approximativement une loi de $khi^{2}(n-p)$ sous $H_0$, avec n grand = 100 et p le nombre de regresseurs, 4 variables explicatives + constante = 5).
+<<>>=
+1-pchisq(modcomplet$dev,df=100-5)
+@
+On ne peut pas accepter $H_1$ : on ne peut pas dire que le mod?le complet n'est pas correct. \\
+
+Appliquons d?sormais un test d?viance du nouveau mod?le par rapport au pr?c?dent (cas : mod?les emboit?s, car mod3 est emboit? dans modcomplet). \\
+
+Pour rappel , le principe du test est le suivant : $H_1$ : modcomplet est meilleur que mod3. \\
+La statistique de la diff?rence de  d?viance suit approximativement une loi de $khi^{2}(p2-p1)$ sous $H_0$.
+<<>>=
+1-pchisq(mod3$deviance-modcomplet$deviance,df=5-3)
+@
+On ne peut pas accepter que le mod?le complet soit meilleur que le mod?le ? 2 variables, ce qui semble coh?rent.
+Autrement dit, le mod?le ? 2 variables est significativement plus informatif que le mod?le complet. \\
+
+\item \textit{Comparez les AIC des deux mod?les (v?rifiez le calcul de la sortie R). Mettez en place une proc?dure de s?lection de variables ascendante, descendante dans les deux directions bas?e sur un crit?re AIC.}
+
+<<>>=
+mod3$aic==mod3$dev+2*3 # mod?le ? 3 param?tres
+modcomplet$aic==modcomplet$dev+2*5 # mod?le ? 5 param?tres
+mod3$aic<modcomplet$aic
+@
+Le mod?le ? 3 variables poss?de un plus faible AIC.
+
+On met en place une proc?dure de s?lection de variables suivant le crit?re de l'AIC par les m?thodes connues (ascendante, descendante, dans les deux sens).
+
+<<warning=FALSE>>=
+# Methode ascendante
+step(mod3,direction="forward",scope=list(upper=formula(modcomplet)))
+@
+\newpage
+<<warning=FALSE>>=
+# Methode descendante
+step(modcomplet,direction="backward",scope=list(lower=formula(mod3)))
+@
+<<warning=FALSE,results='hide'>>=
+# Methode dans les deux sens
+step(modcomplet,direction="both",scope=list(lower=formula(mod3)))
+@
+Les 3 m?thodes nous incitent de conserver le mod?le ? 3 param?tres. \\
+
+\item \textit{Par une approche exp?rimentale, sur une taille d'?chantillon fix?e (puis une plus grande), calculez la proportion de fois que la proc?dure s?lectionne le bon mod?le, un mod?le ? trois covariables, ? quatre covariables...} \\
+
+On propose de r?pondre ? cette question en fixant dans un premier temps n=10 :
+<<warning=FALSE>>=
+# n=10
+n<-10
+nsim=1000
+aic10<-array(dim=c(nsim,4))
+for(i in (1:nsim)){
+     x110<-round(rnorm(n,13,.1),1)
+     x210<-round(rnorm(n,10,.1),1)
+     sexe10<-rbinom(n,1,p=0.5)
+     age10<-round(runif(n,21,28),0)
+     p10<-plogis(beta1*x1+beta2*x2-75,0,1)
+     yl10<-rbinom(n,1,p10)
+     mod10=(glm(yl10~x110+x210,family=binomial(logit)))
+     mod11=(glm(yl10~x110+x210+sexe10,family=binomial(logit)))
+     mod12=(glm(yl10~x110+x210+age10,family=binomial(logit)))
+     mod13=(glm(yl10~x110+x210+sexe10+age10,family=binomial(logit)))
+     aic10[i,1]<-as.numeric((mod10$aic<mod11$aic)&(mod10$aic<mod12$aic)&(mod10$aic<mod13$aic))
+     aic10[i,2]<-as.numeric((mod11$aic<mod10$aic)&(mod11$aic<mod12$aic)&(mod11$aic<mod13$aic))
+     aic10[i,3]<-as.numeric((mod12$aic<mod10$aic)&(mod12$aic<mod11$aic)&(mod12$aic<mod13$aic))
+     aic10[i,4]<-as.numeric((mod13$aic<mod10$aic)&(mod13$aic<mod11$aic)&(mod13$aic<mod12$aic))
+ }
+
+aic10=rbind(aic10,apply(aic10,2,mean)) # Calcul les proportions
+colnames(aic10)=c("Mod.1","Mod.2","Mod.3","Mod.4")
+rownames(aic10)=c(1:nsim,"Proportion")
+aic10[c(1:2,(nsim-2):(nsim+1)),] # Quelques exemples
+@
+
+En fixant maintenant n=100 :
+<<warning=FALSE>>=
+# n=100
+n<-100
+nsim=1000
+aic100<-array(dim=c(nsim,4))
+for(i in (1:nsim)){
+     x1100<-round(rnorm(n,13,.1),1)
+     x2100<-round(rnorm(n,10,.1),1)
+     sexe100<-rbinom(n,1,p=0.5)
+     age100<-round(runif(n,21,28),0)
+     p100<-plogis(beta1*x1+beta2*x2-75,0,1)
+     yl100<-rbinom(n,1,p100)
+     mod10=(glm(yl100~x1100+x2100,family=binomial(logit)))
+     mod11=(glm(yl100~x1100+x2100+sexe100,family=binomial(logit)))
+     mod12=(glm(yl100~x1100+x2100+age100,family=binomial(logit)))
+     mod13=(glm(yl100~x1100+x2100+sexe100+age100,family=binomial(logit)))
+     aic100[i,1]<-as.numeric((mod10$aic<mod11$aic)&(mod10$aic<mod12$aic)&(mod10$aic<mod13$aic))
+     aic100[i,2]<-as.numeric((mod11$aic<mod10$aic)&(mod11$aic<mod12$aic)&(mod11$aic<mod13$aic))
+     aic100[i,3]<-as.numeric((mod12$aic<mod10$aic)&(mod12$aic<mod11$aic)&(mod12$aic<mod13$aic))
+     aic100[i,4]<-as.numeric((mod13$aic<mod10$aic)&(mod13$aic<mod11$aic)&(mod13$aic<mod12$aic))
+ }
+
+aic100=rbind(aic100,apply(aic100,2,mean))
+colnames(aic100)=c("Mod.1","Mod.2","Mod.3","Mod.4")
+rownames(aic100)=c(1:nsim,"Proportion")
+@
+\newpage
+<<>>=
+aic100[c(1:2,(nsim-2):(nsim+1)),] # Quelques exemples
+@
+
+En fixant d?sormais n=1000 :
+<<warning=FALSE>>=
+# n=1000
+n<-1000
+nsim=1000
+aic1000<-array(dim=c(nsim,4))
+for(i in (1:nsim)){
+     x11K<-round(rnorm(n,13,.1),1)
+     x21K<-round(rnorm(n,10,.1),1)
+     sexe1K<-rbinom(n,1,p=0.5)
+     age1K<-round(runif(n,21,28),0)
+     p1K<-plogis(beta1*x1+beta2*x2-75,0,1)
+     yl1K<-rbinom(n,1,p1K)
+     mod10=(glm(yl1K~x11K+x21K,family=binomial(logit)))
+     mod11=(glm(yl1K~x11K+x21K+sexe1K,family=binomial(logit)))
+     mod12=(glm(yl1K~x11K+x21K+age1K,family=binomial(logit)))
+     mod13=(glm(yl1K~x11K+x21K+sexe1K+age1K,family=binomial(logit)))
+     aic1000[i,1]<-as.numeric((mod10$aic<mod11$aic)&(mod10$aic<mod12$aic)&(mod10$aic<mod13$aic))
+     aic1000[i,2]<-as.numeric((mod11$aic<mod10$aic)&(mod11$aic<mod12$aic)&(mod11$aic<mod13$aic))
+     aic1000[i,3]<-as.numeric((mod12$aic<mod10$aic)&(mod12$aic<mod11$aic)&(mod12$aic<mod13$aic))
+     aic1000[i,4]<-as.numeric((mod13$aic<mod10$aic)&(mod13$aic<mod11$aic)&(mod13$aic<mod12$aic))
+ }
+
+aic1000=rbind(aic1000,apply(aic1000,2,mean))
+colnames(aic1000)=c("Mod.1","Mod.2","Mod.3","Mod.4")
+rownames(aic1000)=c(1:nsim,"Proportion")
+aic1000[c(1:2,(nsim-2):(nsim+1)),] # Quelques exemples
+@
+Ainsi, on constate qu'en augmentant n, on se rapproche des proportions suivantes : \\
+\begin{enumerate}
+\item 70\% pour le mod?le ? 2 covariables
+\item 14\% pour le mod?le \textbf{x1}, \textbf{x2} et \textbf{sexe}
+\item 14\% pour le mod?le \textbf{x1}, \textbf{x2} et \textbf{age}
+\item 2\% pour le mod?le complet.
+\end{enumerate}
+\newpage
+
+\item \textit{Sur le jeu de donn?es initial et le mod?le ? 2 covariables, calculez la table de pr?diction en choisissant un seuil ? 50\%. Interpr?tez les valeurs et calculez entre autres les taux de vrais et de faux positifs. Recommencez avec un seuil de 10\% et de 90\%.} \\
+
+\underline{Analyse discriminante statistique :} on cr?? la matrice de confusion.
+<<>>=
+conf<-table(yl,as.numeric(mod3$fitted.values>0.5))
+tbc<-(conf[1,1]+conf[2,2])/sum(conf) # Taux de bonne classif. = 97%
+tvp<-conf[1,1]/(conf[1,1]+conf[1,2]) # Taux de vrais positifs = 98.08%
+tfp<-conf[2,1]/(conf[2,1]+conf[2,2]) # Taux de faux positifs = 4.17%
+@
+Ici, c'est une tr?s bonne classification. \\
+
+On se propose ensuite de cr?er une fonction qui permet de calculer automatiquement ces taux ? partir de deux arguments : le mod?le et le seuil. Ainsi, on a :
+<<>>=
+confusion<-function(mod,seuil){
+     conf<-table(mod$y,as.numeric(mod$fitted.values>seuil))
+     tbc<-(conf[1,1]+conf[2,2])/sum(conf)
+     tvp<-conf[1,1]/(conf[1,1]+conf[1,2])
+     tfp<-conf[2,1]/(conf[2,1]+conf[2,2])
+     return(list(matconf=conf, tbc=tbc, tvp=tvp, tfp=tfp))
+ }     
+confusion(mod3,0.5) # Bonne classification
+confusion(mod3,0.1) # Taux de vrais positifs trop faible
+@
+<<>>=
+confusion(mod3,0.9) # Taux de faux positifs trop fort
+@
+
+\item \textit{Graphique des pr?dictions. Commentez et jouez avec les instructions inscrits sur l'?nonc? :}
+<<echo=FALSE,fig.width=7, fig.height=6.5>>=
+par(mfrow=c(2,1))
+pred.df<-function(x) data.frame(x1=x,x2=12)
+plot(dfl$yl~dfl$x1,cex=.4,xlim=c(0,20),xlab="Note au premier examen", ylab="Chance de succ?s au master",main="Note ? l'examen 2 : 12")
+curve(predict(mod3,pred.df(x),type="resp"),add=TRUE)
+points(dfl$x1,predict(mod3,pred.df(dfl$x1),type="resp"),col="red",cex=.5)
+pred.df<-function(x) data.frame(x1=x,x2=10)
+plot(dfl$yl~dfl$x1,cex=.4,xlim=c(0,20),xlab="Note au premier examen", ylab="Chance de succ?s au master",main="Note ? l'examen 2 : 10")
+curve(predict(mod3,pred.df(x),type="resp"),add=TRUE)
+points(dfl$x1,predict(mod3,pred.df(dfl$x1),type="resp"),col="red",cex=.5)
+@
+Constatons qu'avec une note de 12 ? l'examen 2, nous aurons de tr?s fortes chances d'obtenir le master, m?me si notre premier examen ne s'est pas bien d?roul?. Si nous changeons la valeur de la deuxi?me note, en la fixant ? 10 par exemple, alors une bonne note ? l'examen 1 sera d?cisif.
+\newpage
+Fixons d?sormais la deuxi?me note ? 8 :
+<<fig.width=6, fig.height=4>>=
+pred.df<-function(x) data.frame(x1=x,x2=8)
+plot(dfl$yl~dfl$x1,cex=.4,xlim=c(0,20),xlab="Note au premier examen", ylab="Chance de succ?s au master",main="Note ? l'examen 2 : 8")
+curve(predict(mod3,pred.df(x),type="resp"),add=TRUE)
+points(dfl$x1,predict(mod3,pred.df(dfl$x1),type="resp"),col="red",cex=.5)
+@
+Ici, m?me si nous obtenons une excellente note au premier devoir, nous aurons de tr?s faible de chance de succ?s au master. \\
+
+Nous pouvons nous rendre compte ici de l'importance de la covariable \textbf{x2}. \\
+
+\item \textit{Impl?mentez le test de Hosmer-Lemeshow (avec 10 cat?gories) et v?rifier la sortie R avec la fonction hosltem.test (du paquet ResourceSelection). Commentez.} \\
+
+\underline{1?re ?tape :} On ordonne les probabilit?s estim?es.
+<<>>=
+table1=cbind(mod3$fitted.values,yl)
+table2<-table1[order(table1[,1]),]
+groupe<-c(rep(1,10),rep(2,10),rep(3,10),rep(4,10),rep(5,10),rep(6,10),rep(7,10),rep(8,10),rep(9,10),rep(10,10))
+table3<-cbind(table2,groupe)
+colnames(table3)=c("p estim.","p obs.","groupe")
+head(table3)
+@
+\newpage
+\underline{2nde ?tape :} on s?pare les probas estim?es en k sous groupes (k=10).
+<<>>=
+require(ResourceSelection)
+k<-10
+ck<-0
+for (i in (1:k)){
+     ok<-length(table3[,1][groupe==i & table3[,2]==1])
+     mk<-length(table3[,1][groupe==i])
+     muk<-mean(table3[,1][groupe==i])
+     ck[i]<-(ok-mk*muk)^2/(mk*muk*(1-muk))
+ }
+sum(ck)
+hoslem.test(yl,mod3$fitted.values,g=10) # V?rification
+@
+Pour rappel, $H_{1}$ : Le mod?le n'est pas correct. \\
+La statistique de test $C^{2}$, sous $H_0$, suit approximativement une loi de $khi^{2}(k-2)$. \\
+Ici, on ne peut pas dire que le mod?le n'est pas correct (il n'est pas n?cessairement bon !). \\
+
+\item \textit{Construire une fonction R permettant de prendre en entr?e un vecteur de seuils entre 0 et 1 et le mod?le estim? et qui en sortie trace la courbe ROC. Tracez les courbes ROC du mod?le ? deux covariables et du mod?le avec les quatres covariables. Commentez.} \\
+
+\underline{Note :} Le crit?re ROC est un crit?re tourn? vers la pr?diction (la qualit? du pr?dicteur) et non sur le s?lection de variables. \\
+
+Nous construisons la fonction suivante :
+<<echo=FALSE>>=
+options(width=60)
+@
+<<>>=
+roc<-function(mod,vectseuil,add=FALSE){
+tvp<-array(dim=c(length(vectseuil),1))
+tfp<-array(dim=c(length(vectseuil),1))
+for(i in (1:length(vectseuil))){
+     conf<-table(mod$y,as.numeric(mod$fitted.values>vectseuil[i]))
+     tvp[i]<-conf[1,1]/(conf[1,1]+conf[1,2])
+     tfp[i]<-conf[2,1]/(conf[2,1]+conf[2,2])
+     vtvp<-c(0,tvp,1)
+     vtfp<-c(0,tfp,1)
+ }
+ if(!add) {
+ plot(vtfp,vtvp,type="l",xlim=c(0,1),ylim=c(0,1),xlab="Taux de faux positifs",ylab="Taux de vrais positifs",las=1,main="Courbe ROC")
+ }
+ else points(vtfp,vtvp,type="l",col="red")
+}
+@
+\newpage
+Tracons d?sormais les 2 courbes ROC d?sir?es :
+<<fig.width=6, fig.height=3>>=
+roc(mod3,seq(0.01,.99,0.01))
+roc(modcomplet,seq(0.01,.99,0.01),add=T)
+@
+La courbe ROC est souvent utilis? pour comparer plusieurs classificateurs.\\
+Plus l'AUC (Area Under Curve = Aire Sous la Courbe) est forte, meilleur est le classificateur. \\
+Ici, le mod?le ? 2 covariables et le mod?le complet semble ?tre de qualit? (pr?dictive) semblable. \\
+
+\item \textit{Du mod?le ? 2 covariables, tirez les r?sidus de Pearson, tracez-les et commentez.} 
+<<fig.width=6, fig.height=3.5>>=
+plot(resid(mod3,type="pearson"),main="R?sidus de Pearson du mod?le retenu")
+abline(h=c(-2,2))
+@
+On constate que les r?sidus ne sont pas corr?l?s entre eux et que seules 2 valeurs sont extr?mes.\\
+Rien de choquant, seulement 5\% de valeurs aberrantes.
+S'il y avait eu trop de points aberrants, le mod?le n'aurait peut-?tre pas ?t? ad?quat. \\
+
+\item \textit{Que font les instructions suivantes ? Interpr?tez. Qu'en est-il de la covariable \textbf{x2} ?}
+<<fig.width=8, fig.height=5>>=
+par(mfrow=c(1,2))
+#### x1 ####
+residpartiels<-resid(mod3,type="partial")
+prov<-loess(residpartiels[,"x1"]~x1)
+ordre<-order(x1)
+plot(x1,residpartiels[,"x1"],type="p",cex=.5,xlab="",ylab="",main="R?sidus partiels pour x1")
+matlines(x1[ordre],predict(prov)[ordre])
+abline(lsfit(x1,residpartiels[,"x1"]),lty=2)
+
+#### x2 ####
+residpartiels<-resid(mod3,type="partial")
+prov<-loess(residpartiels[,"x2"]~x2)
+ordre<-order(x2)
+plot(x2,residpartiels[,"x2"],type="p",cex=.5,xlab="",ylab="",main="R?sidus partiels pour x2")
+matlines(x2[ordre],predict(prov)[ordre])
+abline(lsfit(x2,residpartiels[,"x2"]),lty=2)
+@
+Ces instructions tracent les r?sidus partiels pour la covariable \textbf{x1} d'une part et de \textbf{x2} d'autre part. \\
+
+Les trac?s sont bels et bien lin?aires (matlines et abline se confondent), tout est donc normal, les deux variables sont bien construites. \\
+
+Si ce n'?tait pas le cas, il aurait fallu remplacer les variables par une fonction de celles-ci. \\
+
+\textbf{x1} et \textbf{x2} sont donc de bons pr?dicteurs lin?aires. \\
+\newpage
+
+\item \textit{Extraire du mod?le estim?, les coefficients $h_{ii}$. Tracez-les. Votre jeu de donn?es contient-ils des points leviers ? Comment s'interpr?tent-ils ?} \\
+
+En pratique, on dit que l'individu i est un point levier si $h_{ii} > \frac{4p}{n}$ (ou $\frac{3p}{n}$).
+<<fig.width=8, fig.height=5>>=
+head(influence(mod3)$hat) # Methode 1
+head(hatvalues(mod3)) # Methode 2
+plot(hatvalues(mod3),type="h",main="Points leviers du mod?le")
+p<-3 # Nombre de parametres du modele
+n<-100 # Nombre d'individus
+abline(h=4*p/n,col="red",lty="dotted")
+@
+
+Pour retrouver la Hat.Matrix :
+<<>>>=
+W<-diag(mod3$fitted.values*(1-mod3$fitted.values))
+X<-cbind(rep(1,100),x1,x2)
+H<-sqrt(W)%*%X%*%(solve(t(X)%*%W%*%X))%*%t(X)%*%sqrt(W)
+
+a<-array(dim=c(100,1))
+for(i in (1:100)){
+     a[i]<-H[i,i]
+}
+a[1:5] # V?rification
+@
+
+Un point levier est un point qui participe ? une hauteur importante ? sa propre pr?diction. \\
+Ici, on en d?nombre 6.\\
+
+\item \textit{Calculez pour chaque individu la distance de Cook (v?rifiez ce calcul pour le premier individu). Commentez.} \\
+
+Un point influent est un point qui, quand il est supprim?, implique une grosse variation dans les estimations des param?tres. L'indicateur standard est la distance de Cook. \\
+En pratique, on dit qu'un point est influent si $D_{cook_{i}} > 0.4 $.
+
+Pour trouver les distances de Cook pour chaque individu :
+<<>>=
+res.pearson.st<-resid(mod3,type="pearson")/(sqrt(1-hatvalues(mod3)))
+d.cook<-(res.pearson.st^2)*(hatvalues(mod3)/3) # M?thode 2
+head(cooks.distance(mod3)) # Distance de Cook des 6 premiers individus avec V1
+head(d.cook) # Distance de Cook des 6 premiers individus avec V2
+@
+<<fig.width=8, fig.height=5>>=
+par(mfrow=c(1,2))
+plot(cooks.distance(mod3),type="h",main="Points influents V1")
+abline(h=0.4,col="red",lty = "dotted")
+plot(d.cook,type="h",main="Points influents V2")
+abline(h=0.4,col="red",lty = "dotted")
+c(which(d.cook>0.4),max(d.cook))
+@
+Ici, nous ne trouvons qu'un seul point influent. \\
+Selon le contexte, il est parfois pr?f?rable d'enlever/corriger les points aberrants et refaire l'analyse. \\
+
+\item \textit{Artificiellement, rajoutez ? votre base de donn?es initiale 5 individus aberrants. Reprenez les derni?res ?tapes (r?sidus, points leviers et points influents) pour voir si ces indicateurs permettent de d?tecter ces donn?es.} \\
+
+\underline{Premi?re approche} :
+On commence par ajouter les points aberrants suivants :
+\begin{enumerate}
+\item individu 101 : (x1=20,x2=0)
+\item individu 102 : (x1=20,x2=0)
+\item individu 103 : (x1=0,x2=20)
+\item individu 104 : (x1=0,x2=20)
+\item individu 105 : (x1=20,x2=0)
+\end{enumerate}
+<<warning=FALSE>>=
+x1b<-dfl$x1
+x2b<-dfl$x2
+x1b[101]<-20;x1b[102]<-20;x1b[103]<-0;x1b[104]<-0;x1b[105]<-20
+x2b[101]<-0;x2b[102]<-0;x2b[103]<-20;x2b[104]<-20;x2b[105]<-0
+beta0<- -77
+beta1<-2
+beta2<-5
+pb<-plogis(beta1*x1b+beta2*x2b+beta0,0,1)
+ylb<-rbinom(105,1,pb)
+mod3bis=(glm(ylb~x1b+x2b,family=binomial(logit)))
+summary(mod3bis)
+@
+\newpage
+On obtient les r?sidus de Pearson suivants :
+<<fig.width=8, fig.height=5>>=
+plot(resid(mod3bis,type="pearson"),main="R?sidus de Pearson")
+abline(h=c(-2,2))
+@
+Les r?sidus de Pearson ne d?tectent pas nos nouveaux points aberrants. \\
+
+On obtient les r?sidus partiels suivants (non propret? du graphique des r?sidus pour x1b) :
+<<fig.width=8, fig.height=4>>=
+#Residus partiels (x1b)
+residpartiels<-resid(mod3bis,type="partial")
+prov<-loess(residpartiels[,"x1b"]~x1b)
+plot(x1b,residpartiels[,"x1b"],type="p",cex=.5,xlab="",ylab="",main="R?sidus partiels x1b")
+matlines(x1b[ordre],predict(prov)[ordre])
+abline(lsfit(x1b,residpartiels[,"x1b"]),lty=2)
+@
+<<fig.width=8, fig.height=4>>=
+#Residus partiels (x2b)
+residpartiels<-resid(mod3bis,type="partial")
+prov<-loess(residpartiels[,"x2b"]~x2b)
+ordre<-order(x2b)
+plot(x2b,residpartiels[,"x2b"],type="p",cex=.5,xlab="",ylab="",main="R?sidus partiels x2b")
+matlines(x2b[ordre],predict(prov)[ordre])
+abline(lsfit(x2b,residpartiels[,"x2b"]),lty=2)
+@
+
+On obtient les points leviers suivants :
+<<fig.width=8, fig.height=4>>=
+# Points leviers
+plot(hatvalues(mod3bis),type="h",main="Points leviers")
+p<-3
+n<-105
+abline(h=4*p/n,col="red",lty="dotted")
+@
+Les nouveaux points ne sont pas des points leviers mais il y a plus de points leviers que pr?c?demment (8 contre 6). \\
+
+On obtient les points influents suivants :
+
+<<fig.width=8, fig.height=4>>=
+# Points influents
+plot(cooks.distance(mod3bis),type="h",main="Points influents")
+abline(h=0.4,col="red",lty = "dotted")
+@
+
+Les nouveaux points ne sont pas des points influents. \\
+
+\underline{Seconde approche} :
+On d?cide de changer les valeurs de nos points aberrants et voir si des diff?rences d'interpr?tations se produisent :
+\begin{enumerate}
+\item individu 101 : (x1=0,x2=0)
+\item individu 102 : (x1=0,x2=0)
+\item individu 103 : (x1=20,x2=20)
+\item individu 104 : (x1=0,x2=0)
+\item individu 105 : (x1=20,x2=20)
+\end{enumerate}
+<<warning=FALSE>>=
+x1b<-dfl$x1
+x2b<-dfl$x2
+x1b[101]<-0;x1b[102]<-0;x1b[103]<-20;x1b[104]<-0;x1b[105]<-20
+x2b[101]<-0;x2b[102]<-0;x2b[103]<-20;x2b[104]<-0;x2b[105]<-20
+c(length(x1b),length(x2b))
+beta0<- -77
+beta1<-2
+beta2<-5
+pb<-plogis(beta1*x1b+beta2*x2b+beta0,0,1)
+ylb<-rbinom(105,1,pb)
+mod3bis=(glm(ylb~x1b+x2b,family=binomial(logit)))
+summary(mod3bis)
+@
+
+On obtient les r?sidus de Pearson suivants :
+<<fig.width=8, fig.height=5>>=
+plot(resid(mod3bis,type="pearson"),main="R?sidus de Pearson")
+abline(h=c(-2,2))
+@
+Les r?sidus de Pearson ne d?tectent pas nos nouveaux points aberrants.
+\newpage
+On obtient les r?sidus partiels suivants :
+<<fig.width=8, fig.height=4>>=
+#Residus partiels (x1b)
+residpartiels<-resid(mod3bis,type="partial")
+prov<-loess(residpartiels[,"x1b"]~x1b)
+ordre<-order(x1b)
+plot(x1b,residpartiels[,"x1b"],type="p",cex=.5,xlab="",ylab="",main="R?sidus partiels x1b")
+matlines(x1b[ordre],predict(prov)[ordre])
+abline(lsfit(x1b,residpartiels[,"x1b"]),lty=2)
+
+#Residus partiels (x2b)
+residpartiels<-resid(mod3bis,type="partial")
+prov<-loess(residpartiels[,"x2b"]~x2b)
+ordre<-order(x2b)
+plot(x2b,residpartiels[,"x2b"],type="p",cex=.5,xlab="",ylab="",main="R?sidus partiels x2b")
+matlines(x2b[ordre],predict(prov)[ordre])
+abline(lsfit(x2b,residpartiels[,"x2b"]),lty=2)
+@
+
+On obtient les points leviers suivants :
+<<fig.width=8, fig.height=4>>=
+# Points leviers
+plot(hatvalues(mod3bis),type="h",main="Points leviers")
+p<-3
+n<-105
+abline(h=4*p/n,col="red",lty="dotted")
+@
+Les nouveaux points ne sont pas des points leviers, mais on obtient une dizaine de points leviers sur 100.
+
+On obtient les points influents suivants :
+
+<<fig.width=8, fig.height=4>>=
+# Points influents
+plot(cooks.distance(mod3bis),type="h",main="Points influents")
+abline(h=0.4,col="red",lty = "dotted")
+@
+
+Les nouveaux points ne sont pas des points influents. \\
+
+En r?sum?, les nouveaux points que l'on a souhait? aberrants ne sont pas d?tect?s par les m?thodes de points leviers et de points influents.
+\end{enumerate}
+\newpage
+\section{Exercice}
+\textit{Cet exercice consiste ? analyser le jeu de donn?es \textit{icu}. Les donn?es ICU (Intensive Care Unit) sont constitu?es d'un ?chantillon de 256 patients admis dans un service  hospitalier de soins intensifs pour adultes (ICU). L'objectif de l'?tude est de mettre en place un mod?le de r?gression logistique pour pr?dire la probabilit? de survie de ces patients et les facteurs de risque associ?s ? la mortalit? dans un service de soins intensifs. Les intitutil?s des variables sont les suivants :}
+\begin{enumerate}
+\item \textit{DECEDE : statut vital (0=vivant, 1=mort)}
+\item \textit{AGE : age en ann?es}
+\item \textit{SEXE : sexe (0=homme, 1=femme)}
+\item \textit{SERV : service lors de l'admission en USI (0=Medical, 1=Chirurgical)}
+\item \textit{$INF_{JO}$ : infection probable ? l'admission en USI (0=Non, 1=Oui)}
+\item \textit{TAS : tension art?rielle systolique ? l'admission en USI (en mm Hg)}
+\item \textit{FC : fr?quence cardiaque ? l'admission en USI (battements/min)}
+\item \textit{$TYP_{AD}$ : type d'admission (0=normal, 1=en urgence)}
+\item \textit{PO2 : PO2 de la gazom?trie art?rielle initiale (0>60, 1=60)}
+\item \textit{PH : PH de la gazom?trie art?rielle initiale (0=7.25, 1<7.25)}
+\item \textit{BICAR : bicarbonate de la gazom?trie art?rielle initiale (0=18,1<18)}
+\item \textit{CONSC : niveau de conscience ? l'admission (0=pas de coma ni stupeur, 1=stupeur profonde, 2=coma)}
+\item \textit{GLASGOW : score de Glasgow}
+\end{enumerate}
+\\
+
+\subsection {Phase pr?liminaire}
+Cherchons ? savoir si les variables quantitatives de ce jeu de donn?es sont corr?l?es. Pour cela, on va repr?senter le nuage de points et calculer son coefficient de corr?lation entre chaque couple de variables quantitatives. \\
+
+<<>>=
+load(file="icu.RData")
+# Analyse des variables quantitatives :
+panel.cor <- function(x, y, digits=2, prefix="", cex.cor, ...)
+{
+    usr <- par("usr"); on.exit(par(usr))
+    par(usr = c(0, 1, 0, 1))
+    r <- abs(cor(x, y))
+    txt <- format(c(r, 0.123456789), digits=digits)[1]
+    txt <- paste(prefix, txt, sep="")
+    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+    text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+@
+\newpage
+<<fig.width=8, fig.height=5>>=
+pairs(icu[,c(2,6,7,13)],lower.panel=panel.smooth,upper.panel=panel.cor)
+@
+
+On constate qu'il n'y a pas de forte corr?lation entre les variables quantitatives.
+\begin{enumerate}
+\subsection{Analyse par r?gressions logistiques}
+
+Nous allons maintenant faire une r?gression logistique multiple entre notre variable ? expliquer (\textbf{DECEDE}) et nos variables explicatives.
+
+<<>>=
+mod.icu=(glm(decede~.,family=binomial(logit),data=icu))
+summary(mod.icu)$coef
+@
+
+Les variables les plus significativement li?es au d?c?s du patient sont l'?ge, le type d'admission, le niveau de conscience ? l'admission. \\
+\newpage
+
+Cherchons d?sormais ? faire autant de r?gressions logistiques simples qu'il y a de variables explicatives.
+<<echo=FALSE>>=
+options(width=55)
+@
+<<>>=
+# En les prenant une ? une :
+mod.icuF<-array(dim=c(12,2))
+for(i in (2:13)){
+    mod.icuF[i-1,1]=summary(glm(icu[,1]~icu[,i],family=binomial(logit)))$coef[2,1]
+    mod.icuF[i-1,2]=summary(glm(icu[,1]~icu[,i],family=binomial(logit)))$coef[2,4]
+ }
+colnames(mod.icuF)=c("Coeff est.","p-value")
+rownames(mod.icuF)=c("AGE","SEXE","SERV","INF_JO","TAS","FC","TYP_AD","PO2","PH","BICAR","CONSC","GLASGOW")
+mod.icuF
+@
+
+Les variables significatives sont : AGE, SERV, $INF_{JO}$, TAS, $TYP_{AD}$, CONSC et GLASGOW. \\
+
+\underline{Attardons-nous sur le signe des coefficients :} \\
+Le coefficient de l'\textbf{?ge} est positif : plus le patient est ?g? et plus les risques de d?c?s augmentent. \\
+Le coefficient de l'\textbf{infection probable} est positif : si le patient a de forts risques d'infection lors de l'admission en USI, plus il aura de risque de d?c?s. \\
+Le coefficient de la \textbf{}tension art?rielle} est n?gatif : plus la tension art?rielle est faible, plus les risques de d?c?s augmentent. \\
+Le coefficient du \textbf{type d'admission} est positive : si le patient a ?t? admis en urgence, alors il aura plus de risque de d?c?der.  \\
+Pour l'?chelle de \textbf{Glasgow}, il est normal d'avoir un coefficient n?gatif pour cette variable, plus le score est bas, plus le risque de d?c?der est ?lev?. \\
+Analyse inverse concernent le \textbf{niveau de conscience} ? l'admission, tel qu'il a ?t? cod?. \\
+
+Remarquons qu'on retrouve ici la variable explicative \textbf{GLASGOW} que l'on ne retrouvait pas lors de notre r?gression multiple. On se doute qu'elle est fortement li?e avec la variable \textbf{CONSC}, l'?tat de conscience.
+En effet, l'?chelle de Glasgow est une ?chelle allant de 3 (coma profond) ? 15 (personne parfaitement consciente), et qui s'?value sur trois crit?res.
+
+On peut v?rifier cette forte corr?lation par un test du $khi^{2}$ :
+<<warning=FALSE>>=
+chisq.test(icu$consc,icu$glasgow)
+@
+
+\subsection{S?lection de variables}
+Pour d?terminer les variables que nous allons choisir pour la suite de l'analyse, on fait une s?lection par le crit?re de l'AIC, m?thode ascendante.
+
+Lors des r?gressions simples, nous avons vu que la variable  qui ?tait la plus significative avec \textbf{DECEDE} ?tait
+\textbf{CONSC}.
+
+Notre mod?le de d?part sera donc le mod?le avec cette seule variable explicative.
+Le mod?le d'arriv?e sera le mod?le complet.
+<<echo=FALSE>>=
+options(width=70)
+@
+<<>>=
+mod.icu.ini=(glm(decede~consc,family=binomial(logit),data=icu))
+mod.icu.complet=(glm(decede~.,family=binomial(logit),data=icu))
+@
+<<>>=
+step(mod.icu.ini,direction="forward",scope=list(upper=formula(mod.icu.complet)))
+@
+Lors des diff?rentes ?tapes de s?lection de variables, constatons que \textbf{GLASGOW} perd de son sens car tr?s fortement corr?l? avec \textbf{CONSC}. \\
+
+Ici, on retient seulement : \textbf{AGE} + \textbf{CONSC} + \textbf{$TYP_{AD}$} + \textbf{PH} + \textbf{TAS} selon le crit?re de l'AIC par m?thode ascendant. \\
+
+\underline{Remarque :} Quelle que soit la m?thode choisie (ascendante, descendante, dans les deux directions), le mod?le retenu est le m?me. \\
+\newpage
+Cependant, nous avons vu que le \textbf{PH} n'?tait pas une variable significativement explicative, donc le mod?le final retenu sera le suivant : \textbf{AGE} + \textbf{CONSC} + \textbf{$TYP_{AD}$} + \textbf{TAS}.
+
+<<>>=
+mod.icu.choix<-(glm(decede~age+tas+typ_ad+consc,family=binomial(logit),data=icu))
+summary(mod.icu.choix)
+@
+
+\subsection{Quelques tests}
+On effectue un \underline{test de Hosmer-Lemeshow} pour savoir si le mod?le retenu n'est pas mauvais. \\
+<<>>=
+hoslem.test(icu[,1],mod.icu.choix$fitted.values,g=10) 
+@
+On ne peut pas accepter H1. Autrement dit, on ne peut pas dire que le mod?le n'est pas correct (il n'est pas n?cessairement bon !). \\
+
+Appliquons ensuite le \underline{test de d?viance} : il a pour m?me finalit? que le test pr?c?dent.
+<<>>=
+1-pchisq(mod.icu.choix$dev,df=256-5)
+@
+Avec une p-valeur aussi forte, on ne peut accepter $H_1$ : on ne peut pas dire que le mod?le n'est pas correct. \\
+
+Appliquons d?sormais un \underline{test de diff?rence de d?viance} dans le cas de mod?les emboit?s. \\
+Par rapport au mod?le complet (13 coefficients) dans un premier temps :
+
+<<>>=
+1-pchisq(mod.icu.choix$deviance-mod.icu$deviance,df=13-5) 
+@
+Ainsi, on ne peut pas accepter que le mod?le complet soit significativement plus informatif que le mod?le retenu. \\
+
+Aussi, on peut s'interroger l'int?r?t de la variable \textbf{PH} par exemple (puisqu'elle n'?tait pas s?lectionn?e en faisant le summary individuellement, alors qu'elle ?tait s?lectionn?e avec la s?lection de variables par AIC).
+
+<<>>=
+mod.icu.choixtest<-(glm(decede~age+tas+typ_ad+consc+ph,family=binomial(logit),data=icu))
+1-pchisq(mod.icu.choix$deviance-mod.icu.choixtest$deviance,df=6-5) 
+@
+
+Ainsi, on ne peut pas accepter que le mod?le contenant la variable \textbf{PH} soit significativement plus informatif que le mod?le retenu. \\
+
+Au final, on peut dire que le mod?le retenu est coh?rent compte-tenu des derniers tests r?alis?s.
+
+\subsection{Rapport de cote / Augmentation d'une unit?}
+
+Quelle est l'influence sur les probabilit?s de d?c?s si nous augmentons d'une unit? la variable \textbf{AGE} ?
+
+<<>>=
+exp(mod.icu.choix$coeff[2])
+@
+La cote (rapport entre les probabilit?s de succ?s et d'?chec) va ?tre multipli?e par 1.04. \\
+Autrement dit, les risques de d?c?s augmentent avec l'augmention d'une unit? de la variable \textbf{AGE}. \\
+
+Quelle est l'influence sur les probabilit?s de d?c?s si nous augmentons d'une unit? la variable \textbf{TAS} ?
+
+<<>>=
+exp(mod.icu.choix$coeff[3])
+@
+
+La cote va ?tre multipli?e par 0.99. \\
+Autrement dit, les risques de d?c?s diminuent avec l'augmention d'une unit? de la variable \textbf{TAS}. \\
+
+Quelle est l'influence sur les probabilit?s de d?c?s si nous augmentons d'une unit? la note \textbf{$TYP_{AD}$} ?
+
+<<>>=
+exp(mod.icu.choix$coeff[4])
+@
+
+La cote va ?tre multipli?e par 6.42 !\\
+Autrement dit, les risques de d?c?s augmentent clairement avec l'augmention d'une unit? de la variable \textbf{$TYP_{AD}$} (passage d'un type d'admission normal ? un type d'admission en urgence). \\
+\newpage
+Quelle est l'influence sur les probabilit?s de d?c?s si nous augmentons d'une unit? la variable \textbf{CONSC} ?
+
+<<>>=
+exp(mod.icu.choix$coeff[5])
+@
+La cote va ?tre multipli?e par 4.41 ! \\
+Autrement dit, les risques de d?c?s augmentent clairement avec l'augmention d'une unit? de la variable \textbf{CONSC}. \\
+
+\subsection{Utilit? de la matrice d'information de Fischer}
+
+Cherchons maintenant ? calculer la matrice d'information de Fischer.
+
+<<>>=
+summary(mod.icu.choix)$coef
+fi<-dlogis(mod.icu.choix$coefficients[1]+mod.icu.choix$coefficients[2]*icu$age+mod.icu.choix$coefficients[3]*icu$tas+mod.icu.choix$coefficients[4]*icu$typ_ad+mod.icu.choix$coefficients[5]*icu$consc,0,1)
+V<-0
+for(i in (1:256)){
+      tmp<-c(1,icu$age[i],icu$tas[i],icu$typ_ad[i],icu$consc[i])
+      tmp2<-t(t(tmp))%*%tmp
+      V<-V+fi[i]*tmp2
+}
+
+sqrt((diag(solve(V)))) # Verification
+@
+La matrice de Fischer nous permet notamment de calculer les intervalles de confiance de nos param?tres :
+<<warning=FALSE>>=
+InfoFis<-sqrt(solve(V))
+(ICb1<-mod.icu.choix$coeff[2]+c(-1.96,1.96)*InfoFis[2,2])
+(ICb2<-mod.icu.choix$coeff[3]+c(-1.96,1.96)*InfoFis[3,3])
+(ICb3<-mod.icu.choix$coeff[2]+c(-1.96,1.96)*InfoFis[4,4])
+(ICb4<-mod.icu.choix$coeff[3]+c(-1.96,1.96)*InfoFis[5,5])
+@
+\newpage
+Le recours ? la matrice de Fischer nous permet ?galement de tester les coefficients, par exemple : \\
+
+Le coefficient li? ? la variable \textbf{CONSC} est-il strictement sup?rieur au coefficient li? ? la variable \textbf{AGE} ? \\
+
+Sous $H_0$, la statistique de test suit une loi normale (0,1). \\
+
+<<>>=
+(deltaEst.H0<-(mod.icu.choix$coeff[5]-mod.icu.choix$coeff[2])/(sqrt((InfoFis[5,5]+InfoFis[2,2]-2*InfoFis[5,2])/256)))
+1-pnorm(deltaEst.H0)
+@
+
+On accepte $H_1$, c'est ? dire que le coefficient li? ? la variable \textbf{CONSC} soit strictement sup?rieur au coefficient li? ? la variable \textbf{AGE} ?
+
+\subsection{Matrice de confusion}
+
+Poursuivons notre analyse avec la matrice de confusion de notre mod?le.
+<<>>= 
+confusion(mod.icu.choix,0.5)
+@
+Le taux de bonne classification est bon. \\
+Le taux de vrais positifs est excellent. \\
+En revanche, le taux de faux positifs est bien trop ?lev? !.
+\newpage
+\subsection{Courbe ROC}
+
+Tra?ons d?sormais la courbe ROC associ? ? notre mod?le et celle associ?e au mod?le complet.
+<<fig.width=8, fig.height=5>>=
+roc(mod.icu.choix,seq(0.01,.94,0.001))
+roc(mod.icu,seq(0.01,.97,0.001),add=TRUE)
+@
+
+Les graphiques obtenus sont ? peu pr?s ?quivalents, notre mod?le est un aussi bon pr?dicteur que le mod?le complet.
+
+\subsection{Graphiques de pr?dictions}
+
+Repr?sentons d?sormais graphiquement des pr?dictions :
+
+Commen?ons par jouer avec la variable \textbf{CONSC} :
+
+<<fig.width=8, fig.height=8.5>>=
+par(mfrow=c(3,1))
+#####
+pred.df<-function(x) data.frame(consc=x,age=50,tas=130,typ_ad=0)
+plot(icu$decede~icu$consc,cex=.4,xlim=c(0,3),main="age=50,tas=130,typ_ad=0")
+curve(predict(mod.icu.choix,pred.df(x),type="resp"),add=TRUE)
+points(icu$consc,predict(mod.icu.choix,pred.df(icu$consc),type="resp"),col="red",cex=1)
+####
+pred.df<-function(x) data.frame(consc=x,age=50,tas=130,typ_ad=1)
+plot(icu$decede~icu$consc,cex=.4,xlim=c(0,3),main="age=50,tas=130,typ_ad=1")
+curve(predict(mod.icu.choix,pred.df(x),type="resp"),add=TRUE)
+points(icu$consc,predict(mod.icu.choix,pred.df(icu$consc),type="resp"),col="red",cex=1)
+####
+pred.df<-function(x) data.frame(consc=x,age=80,tas=130,typ_ad=1)
+plot(icu$decede~icu$consc,cex=.4,xlim=c(0,3),main="age=80,tas=130,typ_ad=1")
+curve(predict(mod.icu.choix,pred.df(x),type="resp"),add=TRUE)
+points(icu$consc,predict(mod.icu.choix,pred.df(icu$consc),type="resp"),col="red",cex=1)
+@
+
+On constate que les probabilit?s de d?c?s sont sup?rieures en supposant que le type d'admission du patient est urgent.
+En augmentant l'?ge, les risques de d?c?s augmentent ?galement. \\
+
+Jouons d?sormais avec la variable \textbf{AGE} :
+
+<<fig.width=8, fig.height=10>>=
+par(mfrow=c(3,1))
+####
+pred.df<-function(x) data.frame(age=x,consc=1,tas=200,typ_ad=1)
+plot(icu$decede~icu$age,cex=.4,xlim=c(0,100),main="consc=1,tas=200,typ_ad=1")
+curve(predict(mod.icu.choix,pred.df(x),type="resp"),add=TRUE)
+points(icu$age,predict(mod.icu.choix,pred.df(icu$age),type="resp"),col="red",cex=1)
+#####
+pred.df<-function(x) data.frame(age=x,consc=1,tas=130,typ_ad=1)
+plot(icu$decede~icu$age,cex=.4,xlim=c(0,100),main="consc=1,tas=130,typ_ad=1")
+curve(predict(mod.icu.choix,pred.df(x),type="resp"),add=TRUE)
+points(icu$age,predict(mod.icu.choix,pred.df(icu$age),type="resp"),col="red",cex=1)
+#####
+pred.df<-function(x) data.frame(age=x,consc=2,tas=130,typ_ad=1)
+plot(icu$decede~icu$age,cex=.4,xlim=c(0,100),main="consc=2,tas=130,typ_ad=1")
+curve(predict(mod.icu.choix,pred.df(x),type="resp"),add=TRUE)
+points(icu$age,predict(mod.icu.choix,pred.df(icu$age),type="resp"),col="red",cex=1)
+@
+
+Ici, on constate que les risques de d?c?s augmentent davantage avec une tension art?rielle systolique ? l'admission faible et avec un niveau de conscience ? l'admission plus dramatique... \\
+\newpage
+\subsection{Analyse des r?sidus}
+
+Tra?ons les \underline{r?sidus de Pearson} de notre mod?le :
+<<fig.width=8, fig.height=5>>=
+plot(resid(mod.icu.choix,type="pearson"),main="R?sidus de Pearson du mod?le")
+abline(h=c(-2,2))
+@
+
+Une quinzaine de valeurs extr?mes, sur les 256, c'est l?g?rement sup?rieur ? 5\%, ce qui est un peu contraignant, sans en ?tre choquant. \\
+
+Concernant les \underline{r?sidus partiels} (sur variables quantitatives) :
+<<fig.width=9, fig.height=12>>=
+par(mfrow=c(2,1))
+# Pour la variable AGE :
+residpartiels<-resid(mod.icu.choix,type="partial")
+prov<-loess(residpartiels[,"age"]~icu$age)
+ordre<-order(icu$age)
+plot(icu$age,residpartiels[,"age"],type="p",cex=.5,xlab="",ylab="",main="R?sidus partiels AGE")
+matlines(icu$age[ordre],predict(prov)[ordre])
+abline(lsfit(icu$age,residpartiels[,"age"]),lty=2)
+# Pour la variable TAS :
+residpartiels<-resid(mod.icu.choix,type="partial")
+prov<-loess(residpartiels[,"tas"]~icu$tas)
+ordre<-order(icu$tas)
+plot(icu$tas,residpartiels[,"tas"],type="p",cex=.5,xlab="",ylab="",main="R?sidus partiels TAS")
+matlines(icu$tas[ordre],predict(prov)[ordre])
+abline(lsfit(icu$tas,residpartiels[,"tas"]),lty=2)
+@
+
+Les trac?s pour les 2 variables ne sont pas franchement bien lin?aires, mais ils sont acceptables. \\
+Nos deux variables sont donc d'assez bons pr?dicteurs.
+\newpage
+\subsection{Points leviers et influents}
+
+Concernant les points leviers, on trouve :
+<<fig.width=8, fig.height=4>>=
+plot(hatvalues(mod.icu.choix),type="h",main="Points leviers")
+p<-6
+n<-256
+abline(h=4*p/n,col="red",lty = "dotted")
+which(hatvalues(mod.icu.choix)>4*p/n)
+@
+
+Ici, on trouve 3 points leviers, c'est ? dire 3 points qui participent ? une hauteur importante ? leur propre pr?diction. \\
+
+Concernant les points influents, nous n'en d?notons aucun.
+<<fig.width=8, fig.height=3.5>>=
+plot(cooks.distance(mod.icu.choix),type="h",main="Points influents")
+abline(h=0.3,col="red",lty = "dotted")
+@
+
+\underline{Note finale :} Merci pour ce semestre d'enseignement !
+% Pas de jaloux, merci Mr Salsa pour cette ann?e d'enseignement !
+\end{document}

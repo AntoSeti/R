@@ -1,0 +1,381 @@
+%% Note à R : Ne marche pas sur Macintosh chinois... OK Windows 7.
+%% Voir avec l'icone 'SyncPDF view to editor location.
+
+%% LyX 2.0.6 created this file. For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[10pt]{beamer}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\usepackage{url}
+\ifx\hypersetup\undefined
+  \AtBeginDocument{%
+    \hypersetup{unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=false,bookmarksopen=false,
+ breaklinks=false,pdfborder={0 0 0},backref=false,colorlinks=false}
+  }
+\else
+  \hypersetup{unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=false,bookmarksopen=false,
+ breaklinks=false,pdfborder={0 0 0},backref=false,colorlinks=false}
+\fi
+\usepackage{breakurl}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+\providecommand{\LyX}{\texorpdfstring%
+  {L\kern-.1667em\lower.25em\hbox{Y}\kern-.125emX\@}
+  {LyX}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Textclass specific LaTeX commands.
+ % this default might be overridden by plain title style
+ \newcommand\makebeamertitle{\frame{\maketitle}}%
+ \AtBeginDocument{
+   \let\origtableofcontents=\tableofcontents
+   \def\tableofcontents{\@ifnextchar[{\origtableofcontents}{\gobbletableofcontents}}
+   \def\gobbletableofcontents#1{\origtableofcontents}
+ }
+ \def\lyxframeend{} % In case there is a superfluous frame end
+ \long\def\lyxframe#1{\@lyxframe#1\@lyxframestop}%
+ \def\@lyxframe{\@ifnextchar<{\@@lyxframe}{\@@lyxframe<*>}}%
+ \def\@@lyxframe<#1>{\@ifnextchar[{\@@@lyxframe<#1>}{\@@@lyxframe<#1>[]}}
+ \def\@@@lyxframe<#1>[{\@ifnextchar<{\@@@@@lyxframe<#1>[}{\@@@@lyxframe<#1>[<*>][}}
+ \def\@@@@@lyxframe<#1>[#2]{\@ifnextchar[{\@@@@lyxframe<#1>[#2]}{\@@@@lyxframe<#1>[#2][]}}
+ \long\def\@@@@lyxframe<#1>[#2][#3]#4\@lyxframestop#5\lyxframeend{%
+   \frame<#1>[#2][#3]{\frametitle{#4}#5}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\usetheme{Singapore}
+%\usecolortheme{}
+
+\makeatother
+
+\begin{document}
+
+<<setup, include=FALSE>>=
+library(knitr)
+opts_chunk$set(fig.path='figure/beamer-',fig.align='center',fig.show='hold',size='footnotesize')
+@
+
+
+\title{Econométrie des variables qualitatives, \\ Roland Garros 2013}
+
+
+\author{Min Zhu, Antoine Setif, Team MASSS}
+\date{}
+\makebeamertitle
+
+\lyxframeend{}
+
+
+\lyxframeend{}\section{Intro}
+\begin{frame}[fragile]
+\frametitle{Présentation du sujet}
+\begin{itemize}
+\item{Que cherchons-nous à analyser ?}
+\begin{itemize}
+\item{Les victoires au 1er tour à Roland Garros (RG). \\ Notre variable expliquée se nomme : \textbf{T1RG}.}
+\end{itemize}
+\item {Avec quelles variables (explicatives) allons-nous chercher \`{a} expliquer ces victoires ?}
+
+\begin{itemize}
+\item {Classement (\textbf{Ranking}), Meilleur Classement (\textbf{HighRank})}
+\item {\textbf{Age}, \textbf{Taille}, \textbf{Poids}
+\item {Droitier ou Gauchier (\textbf{Main}), Revers une main ou deux mains (\textbf{TypRev)}
+\item {Nombre de participations \`{a} RG (\textbf{NbrePartRG})}
+\end{itemize}
+\end{itemize}
+\begin{itemize}
+\item{{Il y a 128 participants (meilleurs joueurs mondiaux, qualifiés, invitations)}}
+\end{itemize}
+
+\end{frame}
+
+\lyxframeend{}
+
+\begin{frame}[fragile]
+
+\frametitle{Visualisation des donnees}
+
+<<echo=FALSE>>=
+options(width=70)
+setwd("E:/soutien Twan.Min Eco")
+tennis<-read.table("Econometrie-MIN.csv",header=T,sep=",")
+@
+<<>>=
+tennis[1:18,]
+@
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Quelques caractéristiques statistiques}
+<<>>=
+options(width=70)
+summary(tennis[,2:9])
+@
+\end{frame}
+
+\lyxframeend{}\section{Analyse}
+\begin{frame}[fragile]
+\frametitle{Premiers pas}
+\begin{itemize}
+\item Cherchons à déterminer les variables significativement liées à notre variable. Pour cela, nous avons effectué une régression entre \textbf{T1RG} et les variables explicatives, une à une.
+<<echo=FALSE>>=
+options(width=70)
+mod.tennis1<-array(dim=c(8,2))
+for(i in (2:9)){
+  mod.tennis1[i-1,1]=summary(glm(tennis[,1]~tennis[,i],family=binomial(logit)))$coefficients[2,1]
+  mod.tennis1[i-1,2]=summary(glm(tennis[,1]~tennis[,i],family=binomial(logit)))$coefficients[2,4]
+}
+colnames(mod.tennis1)=c("Coeff est.","p-value")
+rownames(mod.tennis1)=c("Ranking","HighRank","Age","Taille","Poids","Main","TypRev","NbrePartRG")
+
+mod.tennis1
+@
+\item Ainsi, les variables les plus corrélées sont \textbf{Ranking}, \textbf{HighRank} et \textbf{NbrePartRG}.\\ \item Notons que les signes des coefficients sont cohérents par rapport à ce que nous attendions.
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Sélection de variables suivant le critère de l'AIC}
+<<results='hide'>>=
+mod.Nb<-glm(T1RG~NbrePartRG,family=binomial(logit),data=tennis)
+mod.T<-glm(T1RG~.,family=binomial(logit),data=tennis)
+step(mod.Nb,direction="forward",scope=list(upper=formula(mod.T)))
+@
+\begin{center}
+ \includegraphics[width=10cm,height=4cm]{AIC.jpg}
+\end{center}
+\begin{itemize}
+\item Comme l'âge n'est pas une variable significative avec \textbf{T1RG}, on décide de travailler avec le modèle suivant :
+\end{itemize}
+<<results='hide'>>=
+mod.F<-glm(T1RG~NbrePartRG+TypRev+HighRank,family=binomial(logit),data=tennis)
+@
+\end{frame}
+
+\lyxframeend{}\section{Tests}
+\begin{frame}[fragile]
+\frametitle{Test de déviance}
+\begin{itemize}
+\item Notre modèle est-il correct ?
+\item Rappel du principe du test : H1 : Le modèle n'est pas correct
+<<>>=
+1-pchisq(mod.F$dev,df=128-4)
+@
+On accepte H1 : on peut dire que le modèle n'est pas correct... \\
+\item Cependant, constatons que :
+<<>>=
+1-pchisq(mod.T$dev,df=128-9)
+@
+Le modèle complet n'est pas non plus correct... \\
+\item Cela est probablement dû à la problèmatique posée (vainqueur du premier tour de RG).
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Test de Hosmer-Lemeshow}
+\begin{itemize}
+\item Rappel du principe du test : H1 : Le modèle n'est pas correct
+<<echo=FALSE>>=
+require(ResourceSelection)
+hoslem.test(tennis[,1],mod.F$fitted.values,g=10)
+@
+\item Ici, on n'accepte pas H1. \\
+Autrement dit, on ne peut pas dire que le modèle n'est pas correct. \\
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Test de déviance - modèles emboités}
+\begin{itemize}
+\item Rappel du principe du test : H1 : mod.T est meilleur que mod.F. \\
+\item La statistique de la différence de  déviance suit approximativement une loi de $khi^{2}(p2-p1)$ sous $H_0$. \\
+<<>>=
+1-pchisq(mod.F$deviance-mod.T$deviance,df=9-4)
+@
+\item On ne peut pas accepter que mod.T soit meilleur que mod.F. \\
+Autrement dit, le modèle choisi est significativement + informatif que le modèle complet.
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}\section{Cote}
+\begin{frame}[fragile]
+\frametitle{Cote - Augmentation d'une unité}
+\begin{itemize}
+\item Que se passe-t-il si le régresseur \textbf{NbrePartRG} augmente d'une unité ?
+<<>>=
+exp(mod.F$coeff[2])
+@
+\underline{Réponse :} La cote (rapport entre les probabilités de succès et d'échec) va être multipliée par 1.05.\\ 
+Autrement dit, les chances de succès augmentent légèrement. \\
+
+\item Que se passe-t-il si le régresseur \textbf{HighRank} augmente d'une unité ?
+<<>>=
+exp(mod.F$coeff[4])
+@
+\underline{Réponse :} La cote va être multipliée par 0.9932387. \\
+Les chances de succès diminuent légèrement.
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}\section{Matrice de confusion}
+\begin{frame}[fragile]
+\frametitle{Matrice de confusion}
+\begin{itemize}
+\item Construisons la matrice de confusion du modèle avec un seuil à 50\%.
+<<echo=FALSE>>=
+confusion<-function(mod,seuil){
+     conf<-table(mod$y,as.numeric(mod$fitted.values>seuil))
+     tbc<-(conf[1,1]+conf[2,2])/sum(conf)
+     tvp<-conf[1,1]/(conf[1,1]+conf[1,2])
+     tfp<-conf[2,1]/(conf[2,1]+conf[2,2])
+     return(list(matconf=conf, tbc=tbc, tvp=tvp, tfp=tfp))
+ }
+confusion(mod.F,0.5)
+@
+\item On constate que le taux de bonne classification est de 61\%. \\ 
+Le taux de vrais positifs est de 62.5\% (pas très élevé). \\
+Le taux de faux positifs est de 40.625\% (trop élevé). 
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}\section{Courbe ROC}
+\begin{frame}[fragile]
+\frametitle{Courbe ROC}
+\begin{itemize}
+\item Construisons la courbe ROC du modèle retenu (en noir) ainsi que la courbe du modèle complet (en rouge).
+<<echo=FALSE>>=
+roc<-function(mod,vectseuil,add=FALSE){
+tvp<-array(dim=c(length(vectseuil),1))
+tfp<-array(dim=c(length(vectseuil),1))
+for(i in (1:length(vectseuil))){
+     conf<-table(mod$y,as.numeric(mod$fitted.values>vectseuil[i]))
+     tvp[i]<-conf[1,1]/(conf[1,1]+conf[1,2])
+     tfp[i]<-conf[2,1]/(conf[2,1]+conf[2,2])
+     vtvp<-c(0,tvp,1)
+     vtfp<-c(0,tfp,1)
+ }
+if(!add) {
+plot(vtfp,vtvp,type="l",xlim=c(0,1),ylim=c(0,1),xlab="Taux de faux positifs",ylab="Taux de vrais positifs",las=1)
+ }
+ else points(vtfp,vtvp,type="l",col="red")
+}
+<<fig.show='hide'>>=
+roc(mod.F,seq(0.11,.77,0.001))
+roc(mod.T,seq(0.08,.89,0.001),add=T)
+@
+\begin{center}
+ \includegraphics[width=6cm,height=4cm]{plot.jpg}
+\end{center}
+\item Globalement, la qualité de prédiction concernant le modèle complet est meilleure que le modèle retenu.
+
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}\section{Prédictions}
+\begin{frame}[fragile]
+\frametitle{Graphique des prédictions (1)}
+\begin{itemize}
+\item Comment évoluent les chances de succès si la seule variable pouvant varier est \textbf{HighRank} ?
+<<echo=FALSE,fig.width=6,fig.height=4.5,fig.align='center'>>=
+pred.df<-function(x) data.frame(HighRank=x,NbrePartRG=10,TypRev=1)
+plot(tennis$T1RG~tennis$HighRank,cex=.4,xlim=c(0,500),main="Proba de succès au T1 de RG, NbrePartRG=10, TypRev=1")
+curve(predict(mod.F,pred.df(x),type="resp"),add=TRUE)
+points(tennis$HighRank,predict(mod.F,pred.df(tennis$HighRank),type="resp"),col="red",cex=1)
+@
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Graphique des prédictions (2)}
+\begin{itemize}
+\item Comment évoluent les chances de succès si la seule variable pouvant varier est \textbf{NbrePartRG} ?
+<<echo=FALSE,fig.width=6,fig.height=4.5,fig.align='center'>>=
+pred.df<-function(x) data.frame(NbrePartRG=x,TypRev=2,HighRank=5)
+plot(tennis$T1RG~tennis$NbrePartRG,cex=.4,xlim=c(0,15),main="Proba de succès au T1 de RG, HighRank=5, TypRev=2")
+curve(predict(mod.F,pred.df(x),type="resp"),add=TRUE)
+points(tennis$NbrePartRG,predict(mod.F,pred.df(tennis$NbrePartRG),type="resp"),col="red",cex=1)
+@
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Graphique des prédictions (3)}
+\begin{itemize}
+\item Comment évoluent les chances de succès si la seule variable pouvant varier est \textbf{NbrePartRG} ?
+<<echo=FALSE,fig.width=6,fig.height=4.5,fig.align='center'>>=
+pred.df<-function(x) data.frame(NbrePartRG=x,TypRev=2,HighRank=100)
+plot(tennis$T1RG~tennis$NbrePartRG,cex=.4,xlim=c(0,15),main="Proba de succès au T1 de RG, HighRank=100, TypRev=2")
+curve(predict(mod.F,pred.df(x),type="resp"),add=TRUE)
+points(tennis$NbrePartRG,predict(mod.F,pred.df(tennis$NbrePartRG),type="resp"),col="red",cex=1)
+@
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}
+\begin{frame}[fragile]
+\frametitle{Graphique des prédictions (4)}
+\begin{itemize}
+\item Comment évoluent les chances de succès si la seule variable pouvant varier est \textbf{TypRev} ?
+<<echo=FALSE,fig.width=6,fig.height=4.5,fig.align='center'>>=
+pred.df<-function(x) data.frame(TypRev=x,NbrePartRG=10,HighRank=5)
+plot(tennis$T1RG~tennis$TypRev,cex=.4,xlim=c(0,5),main="Proba de succès au T1 de RG, NbrePartRG=10, HighRank=5")
+curve(predict(mod.F,pred.df(x),type="resp"),add=TRUE)
+points(tennis$TypRev,predict(mod.F,pred.df(tennis$TypRev),type="resp"),col="red",cex=1)
+@
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}\section{Residus}
+\begin{frame}[fragile]
+\frametitle{Résidus de Pearson}
+\begin{itemize}
+\item Les résidus permettent de déceler des valeurs extrêmes et permettent de contrôler le modèle.
+<<echo=FALSE,fig.width=6,fig.height=4,fig.align='center'>>=
+plot(resid(mod.F,type="pearson"),ylim=c(-2.5,3.5))
+abline(h=c(-2,2))
+@
+\item Ici, seulement 2 valeurs sont en dehors des bornes [-2;2] => OK !
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}\section{Points leviers}
+\begin{frame}[fragile]
+\frametitle{Points leviers}
+\begin{itemize}
+\item Un point levier est un point qui participe à une hauteur importante à sa propre prédiction.
+<<echo=FALSE>>=
+p=4
+n=128
+@
+<<echo=F,fig.width=7,fig.height=4,fig.align='center'>>=
+plot(hatvalues(mod.F),type="h")
+abline(h=4*p/n,col="red",lty="dotted")
+@
+\item Pour information, il s'agit de Lucas Pouille (19 ans, 324ème) et de Nick Kyrgios (18 ans, 262ème), qui ont tous les 2 gagné leur rencontre.
+\end{itemize}
+\end{frame}
+
+\lyxframeend{}\section{Points influents}
+\begin{frame}[fragile]
+\frametitle{Points influents}
+\begin{itemize}
+\item Un point influent est un point qui, quand il est supprimé, implique une grosse variation dans les estimations des paramètres.
+<<echo=F,fig.width=7,fig.height=4,fig.align='center'>>=
+plot(cooks.distance(mod.F),type="h")
+abline(h=0.3,col="red",lty="dotted")
+@
+\item Merveille des merveilles, ce sont les mêmes individus !
+\end{itemize}
+\end{frame}
+
+\end{document}
