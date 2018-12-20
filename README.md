@@ -1,6 +1,6 @@
 # R
 
-Le premier dossier 'ProjetMaster' contient une étude statistique réalisée par Min Zhu et moi-même (projet 'Soutenance_RG_ZhuSetif'), dont la problèmatique était de comprendre ce qui pouvait influencer une victoire au premier tour de Roland-Garros.
+Le premier dossier 'ProjetMaster' contient une étude statistique réalisée par Min Zhu et moi-même (projet 'Soutenance_RG_ZhuSetif'), dont la problématique était de comprendre ce qui pouvait influencer une victoire au premier tour de Roland-Garros.
 
 Nous avions sélectionné divers variables et avions construits plusieurs modèles afin d'en déterminer le meilleur (modèle emboités, critère AIC, analyse des résidus...), avons réalisé plusieurs tests statistiques mais aussi des visualisations d'identification de points influents.
 
@@ -15,5 +15,5 @@ Le second dossier 'Stage BabyLab' contient l'ensemble des fichiers de mon rappor
 
 L'objet de ce stage (type R&D) était une analyse générale de processus ponctuels spatiaux appliqués à la vision des nouveaux-nés (5 groupes de nourrissons, 6 images).
 Pour cela, nous avons effectué des régressions par des modèles linéaires généralisés, type GLM.
-Nous avons ensuite comparer divers modèles afin d’identifier les meilleurs variables explicatives.
+Nous avons ensuite comparer divers modèles afin d’identifier les meilleurs variables explicatives, effectuer des tests...
 Statistique spatiale : Logiciel R, package spatstat.
