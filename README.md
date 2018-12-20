@@ -8,7 +8,7 @@ On trouvera le code .Rnw comprenant l'ensemble du code R mais aussi les instruct
 
 Le second projet 'Econométrie' dans ce premier dossier reprends des exemples de code R pour l'analyse de modélisations statistiques lors d'un projet de master 1, ce sont ces lignes de codes qui nous permis de réaliser le rapport Roland-Garros.
 
-# ------------------------
+### ------------------------
 
 
 Le second dossier 'Stage BabyLab' contient l'ensemble des fichiers de mon rapport de stage de fin d'année dans le cadre de mon master statistique à l'université Pierre Mendes-France de Grenoble. On y trouvera le .pdf mais aussi les divers codes R ainsi que le .Rnw m'ayant permis de réaliser le .pdf et la présentation.
